@@ -1,0 +1,133 @@
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="description" content="Apple IIe Computer written in ES6">
+  <meta name="author" content="John Clark">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="favicon.png">
+  <title>Apple IIe</title>
+  <style type="text/css">
+    body {
+      margin: 0px;
+      padding: 0px;
+      border: 0px;
+      font-size: 13px;
+      font-family: "Lucida Console", Monaco, monospace;
+      background: #e1e1d0;
+    }
+    canvas.screen {
+      margin: 1em;
+      min-width: 800;
+      min-height: 600;
+      border: 2px solid #222;
+    }
+    div.col1>div {
+      margin-left: 1.5em;
+    }
+    button {
+        margin: 4px;
+        margin-top: 0;
+        padding-bottom: 2px;
+        border: 1px solid #c5c5c5;
+        border-radius: 4px;
+        width: 6em;
+        height: 2.5em;
+        font-size: 13px;
+        color: #f5f5ef;
+        background: #734d26;
+    }
+    button:hover:active {
+        color: #520;
+        background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #377b7b), color-stop(1, #499));
+        background:-moz-linear-gradient(center top, #377b7b 5%, #499 100%);
+    }
+    button:hover {
+        background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #86592d), color-stop(1, #734d26));
+        background:-moz-linear-gradient(center top, #86592d 5%, #734d26 100%);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="row">
+    <div class="col1">
+      <canvas class="screen"></canvas>
+      <div><button id="run_stop">run</button><button id="reset">reset</button></div>
+    </div>
+    <div class="col2">
+    </div>
+    <div class="col3">
+    </div>
+  </div>
+
+  <script src="w65c02s.js"></script>
+  <script src="ram.js"></script>
+  <script src="display.js"></script>
+  <script src="keyboard.js"></script>
+  <script src="rom/342-0265-a.js"></script>
+  <script src="rom/342-0304-cd.js"></script>
+  <script src="rom/342-0303-ef.js"></script>
+  <script>
+    const ram = new RAM();
+    const cpu = new W65C02S(ram);
+    const kbd = new Keyboard();
+    let cycles;
+    let interval;
+    let display;
+
+
+    function run_toggle(event) {
+        if(interval) {
+            clearInterval(interval);
+            interval = undefined;
+            event.target.innerText = "run";
+        } else {
+            interval = setInterval(on_interval, 50);
+            event.target.innerText = "stop";
+        }
+    }
+
+    function on_interval() {
+        for(let i=0; i<8200; i++) cycles += cpu.step();
+    }
+
+    function reset() {
+        if(interval) {
+            clearInterval(interval);
+            interval = undefined;
+        }
+
+        cpu.reset();
+        display.reset();
+        cycles = 0;
+        cpu.register.pc = ram.read_word(0xfffc);
+    }
+
+    function init() {
+        const screen = document.querySelector("canvas.screen");
+        display = new Display(rom_342_0265_a, screen);
+        ram.read_hook(0xc000, 0xc00f, (addr) => { return kbd.key; });
+        ram.write_hook(0x0400, 0x07ff, display.draw_text.bind(display));
+        ram.strobe = () => { kbd.key = 0x7f; };
+
+        ram.apply(0xc000, rom_342_0304_cd);
+        ram.apply(0xe000, rom_342_0303_ef);
+
+        document.addEventListener('keydown', kbd.key_down.bind(kbd));
+        document.addEventListener('keyup', kbd.key_up.bind(kbd));
+
+        document.getElementById("run_stop").addEventListener("click", run_toggle);
+        document.getElementById("reset").addEventListener("click", reset);
+
+        cycles = 0;
+        cpu.register.pc = ram.read_word(0xfffc);
+    }
+
+    if(document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+  </script>
+</body>
+</html>
