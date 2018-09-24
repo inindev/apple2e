@@ -47,7 +47,6 @@ class RAM
 
         this.u8a[addr] = val;
         if((addr >= this.write_hook_addr_begin) && (addr <= this.write_hook_addr_end) && (typeof this.write_hook_callback === "function")) {
-            console.log("ram.write");
             this.write_hook_callback(addr, (val & 0xff));
         }
     }

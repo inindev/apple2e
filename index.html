@@ -74,33 +74,49 @@
     let cycles;
     let interval;
     let display;
+    let run_stop_btn;
 
 
-    function run_toggle(event) {
+    function run_toggle() {
+        if(interval) {
+            stop();
+        } else {
+            run();
+        }
+    }
+
+    function stop() {
+        run_stop_btn.innerText = "run";
         if(interval) {
             clearInterval(interval);
             interval = undefined;
-            event.target.innerText = "run";
-        } else {
-            interval = setInterval(on_interval, 50);
-            event.target.innerText = "stop";
         }
+    }
+
+    function run() {
+        run_stop_btn.innerText = "stop";
+        if(interval) return;
+        interval = setInterval(on_interval, 50);
     }
 
     function on_interval() {
         for(let i=0; i<8200; i++) cycles += cpu.step();
     }
 
-    function reset() {
-        if(interval) {
-            clearInterval(interval);
-            interval = undefined;
-        }
+    function reset(event) {
+        const was_stopped = !interval;
+        stop();
 
         cpu.reset();
         display.reset();
         cycles = 0;
+
+        if(event && (event.shiftKey || event.altKey || event.metaKey)) {
+            ram.fill(0, 0x0000, 0xbfff); // hard reset
+        }
+
         cpu.register.pc = ram.read_word(0xfffc);
+        if(!was_stopped) run();
     }
 
     function init() {
@@ -116,11 +132,15 @@
         document.addEventListener('keydown', kbd.key_down.bind(kbd));
         document.addEventListener('keyup', kbd.key_up.bind(kbd));
 
-        document.getElementById("run_stop").addEventListener("click", run_toggle);
+        run_stop_btn = document.getElementById("run_stop");
+        run_stop_btn.addEventListener("click", run_toggle);
         document.getElementById("reset").addEventListener("click", reset);
 
         cycles = 0;
         cpu.register.pc = ram.read_word(0xfffc);
+
+        const msg = 'press "run" below to start vm';
+        for(let i=0; i<msg.length; i++) display.draw_text(0x042d+i, msg.charCodeAt(i)+0x80);
     }
 
     if(document.readyState === "loading") {

@@ -63,7 +63,7 @@ class Keyboard
     get key() { return this._key; };
     set key(val) { this._key = val; }
     get key_pressed() { return this._key_pressed; };
-    set key_pressed(val) { this._key_pressed = (val == 0); }
+    set key_pressed(val) { this._key_pressed = (val != 0); }
 
     key_down(event) {
         if(!event.metaKey) {  // TODO: ignore meta?
