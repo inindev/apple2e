@@ -36,28 +36,39 @@ class Keyboard
         };
 
         this.key_map_shift = {
-            0x30: 0x29, // )
-            0x31: 0x21, // !
-            0x32: 0x40, // @
-            0x33: 0x23, // #
-            0x34: 0x24, // $
-            0x35: 0x25, // %
-            0x36: 0x5e, // ^
-            0x37: 0x26, // &
-            0x38: 0x2a, // *
-            0x39: 0x28, // (
-            0x3b: 0x3a, // :
-            0x3d: 0x2b, // +
-            0xad: 0x5f, // _
-            0xbc: 0x3c, // <
-            0xbe: 0x3e, // >
-            0xc0: 0x7e, // ~
-            0xbf: 0x3f, // ?
-            0xdb: 0x7b, // {
-            0xdc: 0x7c, // |
-            0xdd: 0x7d, // }
+            0x30: 0x29, // ) (right paren)
+            0x31: 0x21, // ! (exclamation)
+            0x32: 0x40, // @ (at)
+            0x33: 0x23, // # (pound)
+            0x34: 0x24, // $ (currency)
+            0x35: 0x25, // % (percent)
+            0x36: 0x5e, // ^ (caret)
+            0x37: 0x26, // & (ampersand)
+            0x38: 0x2a, // * (star)
+            0x39: 0x28, // ( (left paren)
+            0x3b: 0x3a, // : (colon)
+            0x3d: 0x2b, // + (plus)
+            0xad: 0x5f, // _ (underbar)
+            0xbc: 0x3c, // < (less than)
+            0xbe: 0x3e, // > (greater than)
+            0xc0: 0x7e, // ~ (tilde)
+            0xbf: 0x3f, // ? (question mark)
+            0xdb: 0x7b, // { (left curly bracket)
+            0xdc: 0x7c, // | (pipe)
+            0xdd: 0x7d, // } (right curly bracket)
             0xde: 0x22, // " (double quote)
         };
+
+        if(navigator.userAgent.toLowerCase().indexOf('firefox') < 0) {
+            // not firefox
+            this.key_map[0xba] = 0x3b; // ; (semicolon)
+            this.key_map[0xbb] = 0x3d; // = (equal)
+            this.key_map[0xbd] = 0xad; // - (minus)
+            this.key_map_shift[0xba] = 0x3a; // : (colon)
+            this.key_map_shift[0xbb] = 0x2b; // + (plus)
+            this.key_map_shift[0xbd] = 0x5f; // _ (underbar)
+        }
+
     }
 
     get key() { return this._key; };
