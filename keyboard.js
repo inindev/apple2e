@@ -68,7 +68,6 @@ class Keyboard
             this.key_map_shift[0xbb] = 0x2b; // + (plus)
             this.key_map_shift[0xbd] = 0x5f; // _ (underbar)
         }
-
     }
 
     get key() { return this._key; };
