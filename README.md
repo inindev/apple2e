@@ -3,7 +3,7 @@ Apple IIe Computer written in ES6
 
 &nbsp;
 
-Virtual Apple IIe <a href="https://inindev.github.io/apple2e/index.html" target="_blank">demo</a>
+Virtual Apple IIe <a target="_blank" href="https://inindev.github.io/apple2e/index.html">demo</a>
 
 &nbsp;
 
@@ -13,5 +13,6 @@ Virtual Apple IIe <a href="https://inindev.github.io/apple2e/index.html" target=
 
 &nbsp;
 
---
+---
+
 John Clark, 2018
