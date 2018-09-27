@@ -56,17 +56,13 @@ class Display
 
 
     draw_text(addr, val) {
-        addr %= 0x400;  // text pages are 1024 bytes
-
-        // rows are 120 columns wide consuming 128 bytes
-        // in 40 col mode they wrap three times
-        // 8 rows wrapping 3 times creates a total of 24
-        const ac = addr % 128;  // abs column: 0-119
-        const ar = addr >> 7;   // abs row: 0-7
-        const col = ac % 40;    // scn column: 0-39
-        const rs = ((ac-col) >> 2) & 0x18;  // section 0-2 << 3
-        const row = rs | ar;
-
+        // rows are 120 columns wide consuming 128 bytes (0-119)+8
+        // every 40 columns rows wrap for a total of three wraps
+        // 8 rows wrapping 3 times creates a total of 24 rows
+        // bits 6,5 ($60) of columns 0,40,80 yield the wrap row 0,1,2
+        // bits 9,8,7 yield the 0-7 relative row number
+        const col = (addr & 0x7f) % 40;  // column: 0-39
+        const row = (((addr - col) >> 2) & 0x18) | ((addr >> 7) & 0x07);
         this.draw_char40(row, col, val);
     }
 
@@ -74,7 +70,6 @@ class Display
     // draw 14x16 char
     draw_char40(row, col, char) {
         if((row > 23) || (col > 39)) return;
-        char &= 0x1ff;
 
         const ox = (col * 14)+2;
         const oy = (row * 16)+2;
