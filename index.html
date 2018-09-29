@@ -64,7 +64,7 @@
 
   <script src="w65c02s.js"></script>
   <script src="ram.js"></script>
-  <script src="display.js"></script>
+  <script src="text_display.js"></script>
   <script src="keyboard.js"></script>
   <script src="rom/342-0265-a.js"></script>
   <script src="rom/342-0304-cd.js"></script>
@@ -123,7 +123,7 @@
 
     function init() {
         const screen = document.querySelector("canvas.screen");
-        display = new Display(rom_342_0265_a, screen);
+        display = new TextDisplay(rom_342_0265_a, screen);
         ram.read_hook(0xc000, 0xc00f, (addr) => { return kbd.key; });
         ram.write_hook(0x0400, 0x07ff, display.draw_text.bind(display));
         ram.strobe = () => { kbd.key = 0x7f; };

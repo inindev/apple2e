@@ -1,5 +1,5 @@
 //
-//  apple2e display emulation
+//  apple2e text display emulation
 //
 //  Copyright 2018, John Clark
 //
@@ -7,15 +7,15 @@
 //  https://www.gnu.org/licenses/gpl.html
 //
 
-class Display
+class TextDisplay
 {
-    constructor(font_rom, canvas, fore, back, lines) {
+    constructor(font_rom, canvas, fore, back, hlines) {
         this._font_rom = font_rom;
         this._context = canvas.getContext('2d');
 
         this.fore = fore || 0x00ff66; // green
-        this.back = back || 0x222222; // almost black
-        this.lines = lines == undefined;
+        this.back = back || 0x111111; // almost black
+        this.hlines = hlines == undefined;
 
         canvas.width = 564;  // 7*2*40 + 4
         canvas.height = 388; // 8*2*24 + 4
@@ -30,9 +30,9 @@ class Display
         this._fr = (rgb >> 16) & 0xff;
         this._fg = (rgb >> 8) & 0xff;
         this._fb = rgb & 0xff;
-        this._frl = this._lines ? this._fr>>1 : this._fr;
-        this._fgl = this._lines ? this._fg>>1 : this._fg;
-        this._fbl = this._lines ? this._fb>>1 : this._fb;
+        this._frl = this._hlines ? this._fr>>1 : this._fr;
+        this._fgl = this._hlines ? this._fg>>1 : this._fg;
+        this._fbl = this._hlines ? this._fb>>1 : this._fb;
     };
 
     get back() {
@@ -44,14 +44,14 @@ class Display
         this._bb = rgb & 0xff;
     };
 
-    get lines() {
-        return this._lines;
+    get hlines() {
+        return this._hlines;
     };
-    set lines(val) {
-        this._lines = (val != 0);
-        this._frl = this._lines ? this._fr>>1 : this._fr;
-        this._fgl = this._lines ? this._fg>>1 : this._fg;
-        this._fbl = this._lines ? this._fb>>1 : this._fb;
+    set hlines(val) {
+        this._hlines = (val != 0);
+        this._frl = this._hlines ? this._fr>>1 : this._fr;
+        this._fgl = this._hlines ? this._fg>>1 : this._fg;
+        this._fbl = this._hlines ? this._fb>>1 : this._fb;
     };
 
 
@@ -99,7 +99,7 @@ class Display
             }
         }
 
-        this._context.putImageData(id, ox, oy);
+        this._context.putImageData(id, ox, oy, 0, 0, 14, 16);
     }
 
 
