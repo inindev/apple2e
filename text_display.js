@@ -11,14 +11,14 @@ class TextDisplay
 {
     constructor(font_rom, canvas, fore, back, hlines) {
         this._font_rom = font_rom;
+
+        canvas.width = 564;  // 7*2*40 + 4
+        canvas.height = 388; // 8*2*24 + 4
         this._context = canvas.getContext('2d');
 
         this.fore = fore || 0x00ff66; // green
         this.back = back || 0x111111; // almost black
         this.hlines = hlines == undefined;
-
-        canvas.width = 564;  // 7*2*40 + 4
-        canvas.height = 388; // 8*2*24 + 4
 
         this.reset();
     }
