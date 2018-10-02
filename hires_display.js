@@ -23,7 +23,7 @@ class HiresDisplay
     constructor(canvas, lines) {
         canvas.width = 564;  // 7*2*40 + 4
         canvas.height = 388; // 8*2*24 + 4
-        this.context = canvas.getContext('2d');
+        this.context = canvas.getContext('2d', {alpha: false});
 
         // color palette
         this.violet = 0xff22dd;
