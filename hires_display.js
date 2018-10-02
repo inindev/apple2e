@@ -24,6 +24,8 @@ class HiresDisplay
         canvas.width = 564;  // 7*2*40 + 4
         canvas.height = 388; // 8*2*24 + 4
         this.context = canvas.getContext('2d', {alpha: false});
+        this.context.imageSmoothingEnabled = true;
+        this.context.imageSmoothingQuality = "high";
 
         // color palette
         this.violet = 0xff22dd;
@@ -186,7 +188,7 @@ class HiresDisplay
         val = (val << 2) | ((prev >> 5) & 0x03);
 
         // row: 0-191, col: 0-39
-        const ox = (col * 14) + 2;
+        const ox = (col * 14) + 1;
         const oy = (row * 2) + 2;
 
         const id = this.context.getImageData(ox, oy, 14, 2);
@@ -204,15 +206,17 @@ class HiresDisplay
 
     reset() {
         this.init_color_table();
-
-        this.id = this.context.createImageData(564, 388);
+        const r = (this.black >> 16) & 0xff;
+        const g = (this.black >> 8) & 0xff;
+        const b = this.black & 0xff;
+        const id = this.context.createImageData(564, 388);
         const imax = 564 * 388 * 4; // (560+4, 384+4) * rgba
         for(let i=0; i<imax; i+=4) {
-            this.id.data[i]   = this._br;
-            this.id.data[i+1] = this._bg;
-            this.id.data[i+2] = this._bb;
-            this.id.data[i+3] = 0xff;
+            id.data[i]   = r;
+            id.data[i+1] = g;
+            id.data[i+2] = b;
+            id.data[i+3] = 0xff;
         }
-        this.context.putImageData(this.id, 0, 0);
+        this.context.putImageData(id, 0, 0);
     }
 }
