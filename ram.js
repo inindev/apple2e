@@ -26,7 +26,7 @@ class RAM
     read(addr) {
         addr &= 0xffff;
         if((addr >= this.read_hook_addr_begin) && (addr <= this.read_hook_addr_end) && (typeof this.read_hook_callback === "function")) {
-            return this.read_hook_callback(addr) & 0xff;
+            return this.read_hook_callback(this, addr) & 0xff;
         }
         return this.u8a[addr & 0xffff];
     }
@@ -47,7 +47,7 @@ class RAM
 
         this.u8a[addr] = val;
         if((addr >= this.write_hook_addr_begin) && (addr <= this.write_hook_addr_end) && (typeof this.write_hook_callback === "function")) {
-            this.write_hook_callback(addr, (val & 0xff));
+            this.write_hook_callback(this, addr, (val & 0xff));
         }
     }
 
