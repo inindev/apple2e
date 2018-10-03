@@ -480,11 +480,11 @@ class W65C02S
     //
     cmp(memfn) {
         const val = memfn.read();
-        const diff = (this.reg.a + (val ^ 0xff) + 1);
+        const res = (this.reg.a + (val ^ 0xff) + 1);
 
-        this.reg.flag.test_n(diff);
-        this.reg.flag.test_z(diff);
-        this.reg.flag.test_c(diff);
+        this.reg.flag.test_n(res);
+        this.reg.flag.test_z(res);
+        this.reg.flag.test_c(res);
         return memfn.cycles;
     }
 
@@ -493,11 +493,11 @@ class W65C02S
     //
     cpx(memfn) {
         const val = memfn.read();
-        const diff = (this.reg.x + (val ^ 0xff) + 1);
+        const res = (this.reg.x + (val ^ 0xff) + 1);
 
-        this.reg.flag.test_n(diff);
-        this.reg.flag.test_z(diff);
-        this.reg.flag.test_c(diff);
+        this.reg.flag.test_n(res);
+        this.reg.flag.test_z(res);
+        this.reg.flag.test_c(res);
         return memfn.cycles;
     }
 
@@ -506,11 +506,11 @@ class W65C02S
     //
     cpy(memfn) {
         const val = memfn.read();
-        const diff = (this.reg.y + (val ^ 0xff) + 1);
+        const res = (this.reg.y + (val ^ 0xff) + 1);
 
-        this.reg.flag.test_n(diff);
-        this.reg.flag.test_z(diff);
-        this.reg.flag.test_c(diff);
+        this.reg.flag.test_n(res);
+        this.reg.flag.test_z(res);
+        this.reg.flag.test_c(res);
         return memfn.cycles;
     }
 
@@ -519,10 +519,10 @@ class W65C02S
     //
     dec(memfn) {
         const val = memfn.read();
-        const dec = val + 0xff;
-        memfn.write(dec);
-        this.reg.flag.test_n(dec);
-        this.reg.flag.test_z(dec);
+        const res = val + 0xff;
+        memfn.write(res);
+        this.reg.flag.test_n(res);
+        this.reg.flag.test_z(res);
         return memfn.cycles + memfn.write_extra_cycles;
     }
 
@@ -555,10 +555,10 @@ class W65C02S
     //
     inc(memfn) {
         const val = memfn.read();
-        const inc = val + 1;
-        memfn.write(inc);
-        this.reg.flag.test_n(inc);
-        this.reg.flag.test_z(inc);
+        const res = val + 1;
+        memfn.write(res);
+        this.reg.flag.test_n(res);
+        this.reg.flag.test_z(res);
         return memfn.cycles + memfn.write_extra_cycles;
     }
 
@@ -719,8 +719,8 @@ class W65C02S
     //
     rmb(b, memfn) {
         const val = memfn.read();
-        val &= (0xff ^ (1 << b));
-        memfn.write(val);
+        const res = val & (0xff ^ (1 << b));
+        memfn.write(res);
         return memfn.cycles + memfn.write_extra_cycles;
     }
 
@@ -824,8 +824,8 @@ class W65C02S
     //
     smb(b, memfn) {
         const val = memfn.read();
-        val |= (1 << b);
-        memfn.write(val);
+        const res = val | (1 << b);
+        memfn.write(res);
         return memfn.cycles + memfn.write_extra_cycles;
     }
 
@@ -973,6 +973,7 @@ class W65C02S
     stack_pull_word() {
         return this.stack_pull_byte() | this.stack_pull_byte()<<8;
     }
+
 
     init() {
         // addressing modes, pp.15-20
