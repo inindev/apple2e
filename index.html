@@ -19,7 +19,7 @@
       margin: 1em;
       min-width: 800;
       min-height: 600;
-      border: 2px solid #222;
+      border: 2px solid #111;
     }
     div.col1>div {
       margin-left: 1.5em;
@@ -65,6 +65,7 @@
   <script src="w65c02s.js"></script>
   <script src="ram.js"></script>
   <script src="text_display.js"></script>
+  <script src="hires_display.js"></script>
   <script src="keyboard.js"></script>
   <script src="rom/342-0265-a.js"></script>
   <script src="rom/342-0304-cd.js"></script>
@@ -73,10 +74,12 @@
     const ram = new RAM();
     const cpu = new W65C02S(ram);
     const kbd = new Keyboard();
-    let cycles;
-    let interval;
+
     let display;
     let run_stop_btn;
+    let cycles;
+    let interval;
+    let last_ms;
 
 
     function run_toggle() {
@@ -90,7 +93,7 @@
     function stop() {
         run_stop_btn.innerText = "run";
         if(interval) {
-            clearInterval(interval);
+            window.cancelAnimationFrame(interval);
             interval = undefined;
         }
     }
@@ -98,11 +101,20 @@
     function run() {
         run_stop_btn.innerText = "stop";
         if(interval) return;
-        interval = setInterval(on_interval, 50);
+
+        last_ms = performance.now();
+        interval = window.requestAnimationFrame(on_interval);
     }
 
-    function on_interval() {
-        for(let i=0; i<8200; i++) cycles += cpu.step();
+    function on_interval(now_ms) {
+        //const interval_cycles = parseInt((now_ms-last_ms) * 1023 + cycles, 10);
+        //const interval_cycles = (((now_ms-last_ms) * 1023) & 0x7fff) + cycles;
+        const interval_cycles = (((now_ms-last_ms) << 10) & 0x7fff) + cycles;
+        last_ms = now_ms;
+        while(cycles < interval_cycles) {
+           cycles += cpu.step();
+        };
+        interval = window.requestAnimationFrame(on_interval);
     }
 
     function reset(event) {
@@ -124,8 +136,11 @@
     function init() {
         const screen = document.querySelector("canvas.screen");
         display = new TextDisplay(rom_342_0265_a, screen);
-        ram.read_hook(0xc000, 0xc00f, (addr) => { return kbd.key; });
         ram.write_hook(0x0400, 0x07ff, display.draw_text.bind(display));
+//        display = new HiresDisplay(screen);
+//        ram.write_hook(0x2000, 0x3fff, display.draw.bind(display));
+
+        ram.read_hook(0xc000, 0xc00f, (addr) => { return kbd.key; });
         ram.strobe = () => { kbd.key = 0x7f; };
 
         ram.apply(0xc000, rom_342_0304_cd);
@@ -142,11 +157,11 @@
         cpu.register.pc = ram.read_word(0xfffc);
 
         const msg = 'press "run" below to start vm';
-        for(let i=0; i<msg.length; i++) display.draw_text(0x042d+i, msg.charCodeAt(i)+0x80);
+        for(let i=0; i<msg.length; i++) display.draw_text(ram, 0x042d+i, msg.charCodeAt(i)+0x80);
     }
 
     if(document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
+        document.addEventListener("DOMContentLoaded", () => { init(); });
     } else {
         init();
     }
