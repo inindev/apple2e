@@ -107,9 +107,7 @@
     }
 
     function on_interval(now_ms) {
-        //const interval_cycles = parseInt((now_ms-last_ms) * 1023 + cycles, 10);
-        //const interval_cycles = (((now_ms-last_ms) * 1023) & 0x7fff) + cycles;
-        const interval_cycles = (((now_ms-last_ms) << 10) & 0x7fff) + cycles;
+        const interval_cycles = (((now_ms-last_ms) * 1023) & 0x7fff) + cycles;
         last_ms = now_ms;
         while(cycles < interval_cycles) {
            cycles += cpu.step();
