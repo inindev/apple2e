@@ -25,9 +25,7 @@ class Memory
         this.aux = new Uint8Array(0x10000);    // 64k
         this.aux_b2 = new Uint8Array(0x1000);  //  4k (d000 bank 2)
 
-        // fn(addr)
         this.read_hooks = [];
-        // fn(addr, val)
         this.write_hooks = [];
     }
 
@@ -39,8 +37,12 @@ class Memory
             if(res != undefined) return res & 0xff;
         }
 
+        // e000-ffff
         if(addr > 0xdfff) return this.rom_ef[addr & 0x1fff];
-        if(addr > 0xbfff) return this.rom_cd[addr & 0x1fff];
+        // d000-dfff
+        if(addr > 0xcfff) return this.rom_cd[(addr & 0x0fff) | 0x1000];
+        // c000-cfff
+        if(addr > 0xbfff) return this.rom_cd[addr & 0x0fff];
 
         return this.main[addr & 0xffff];
     }
