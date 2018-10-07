@@ -13,7 +13,7 @@
 class Keyboard
 {
     constructor(bytes) {
-        this._key = 0xff;
+        this._key = 0x7f;
         this._key_pressed = false;
 
         this.key_map = {

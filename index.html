@@ -63,7 +63,7 @@
   </div>
 
   <script src="w65c02s.js"></script>
-  <script src="ram.js"></script>
+  <script src="memory.js"></script>
   <script src="text_display.js"></script>
   <script src="hires_display.js"></script>
   <script src="keyboard.js"></script>
@@ -71,11 +71,12 @@
   <script src="rom/342-0304-cd.js"></script>
   <script src="rom/342-0303-ef.js"></script>
   <script>
-    const ram = new RAM();
-    const cpu = new W65C02S(ram);
+    const mem = new Memory(rom_342_0304_cd, rom_342_0303_ef);
+    const cpu = new W65C02S(mem);
     const kbd = new Keyboard();
 
-    let display;
+    let display_text;
+    //let display_hires;
     let run_stop_btn;
     let cycles;
     let interval;
@@ -120,29 +121,28 @@
         stop();
 
         cpu.reset();
-        display.reset();
+        display_text.reset();
+        //display_hires.reset();
         cycles = 0;
 
         if(event && (event.shiftKey || event.altKey || event.metaKey)) {
-            ram.fill(0, 0x0000, 0xbfff); // hard reset
+            mem.reset(); // hard reset
         }
 
-        cpu.register.pc = ram.read_word(0xfffc);
+        cpu.register.pc = mem.read_word(0xfffc);
         if(!was_stopped) run();
     }
 
     function init() {
         const screen = document.querySelector("canvas.screen");
-        display = new TextDisplay(rom_342_0265_a, screen);
-        ram.write_hook(0x0400, 0x07ff, display.draw_text.bind(display));
-//        display = new HiresDisplay(screen);
-//        ram.write_hook(0x2000, 0x3fff, display.draw.bind(display));
+        display_text = new TextDisplay(rom_342_0265_a, screen);
+        mem.add_write_hook((addr, val) => { if((addr & 0xfc00) == 0x0400) display_text.draw_text(mem, addr, val); }); // 0400-07ff
+        //display_hires = new HiresDisplay(screen);
+        //mem.add_write_hook((addr, val) => { if((addr & 0xe000) == 0x2000) display_hires.draw(mem, addr, val); }); // 2000-3fff
 
-        ram.read_hook(0xc000, 0xc00f, (addr) => { return kbd.key; });
-        ram.strobe = () => { kbd.key = 0x7f; };
-
-        ram.apply(0xc000, rom_342_0304_cd);
-        ram.apply(0xe000, rom_342_0303_ef);
+        // keyboard strobe
+        mem.add_read_hook((addr) => { if((addr & 0xfff0) == 0xc000) return kbd.key; });
+        mem.add_write_hook((addr, val) => { if(addr == 0xc010) { kbd.key = 0x7f; return 0; } });
 
         document.addEventListener('keydown', kbd.key_down.bind(kbd));
         document.addEventListener('keyup', kbd.key_up.bind(kbd));
@@ -152,10 +152,10 @@
         document.getElementById("reset").addEventListener("click", reset);
 
         cycles = 0;
-        cpu.register.pc = ram.read_word(0xfffc);
+        cpu.register.pc = mem.read_word(0xfffc);
 
         const msg = 'press "run" below to start vm';
-        for(let i=0; i<msg.length; i++) display.draw_text(ram, 0x042d+i, msg.charCodeAt(i)+0x80);
+        for(let i=0; i<msg.length; i++) display_text.draw_text(mem, 0x042d+i, msg.charCodeAt(i)+0x80);
     }
 
     if(document.readyState === "loading") {

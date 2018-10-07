@@ -127,7 +127,7 @@ class HiresDisplay
     }
 
 
-    draw(ram, addr, val) {
+    draw(mem, addr, val) {
         // rows are 120 columns wide consuming 128 bytes (0-119)+8
         // every 40 columns rows wrap for a total of three wraps
         // 8 rows wrapping 3 times creates a total of 24 rows
@@ -183,7 +183,7 @@ class HiresDisplay
         // 876543210
         // +v+        -> pix0
         // 876543210
-        const prev = (col < 1) ? 0 : ram.read(addr-1);
+        const prev = (col < 1) ? 0 : mem.read(addr-1);
         const orig = val;
         val = (val << 2) | ((prev >> 5) & 0x03);
 

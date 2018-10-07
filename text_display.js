@@ -55,7 +55,7 @@ class TextDisplay
     };
 
 
-    draw_text(ram, addr, val) {
+    draw_text(mem, addr, val) {
         // rows are 120 columns wide consuming 128 bytes (0-119)+8
         // every 40 columns rows wrap for a total of three wraps
         // 8 rows wrapping 3 times creates a total of 24 rows
