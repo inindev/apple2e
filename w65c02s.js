@@ -952,7 +952,7 @@ class W65C02S
         const opfcn = this.op[opcode];
         if(!opfcn) {
             console.log("!!!! illegal opcode: 0x" + opcode.toString(16).padStart(2, '0'));
-            return -1;  // TODO: enter invalid opcodes
+            return -1;  // TODO: ensure all 256 positions are covered
         }
         return opfcn();
     }
@@ -1227,6 +1227,22 @@ class W65C02S
                 }
             }
         }
+
+        // illegal opcodes (nop)
+        this.op[0x02] = () => { this.reg.pc++; return 2; };
+        this.op[0x22] = () => { this.reg.pc++; return 2; };
+        this.op[0x42] = () => { this.reg.pc++; return 2; };
+        this.op[0x62] = () => { this.reg.pc++; return 2; };
+        this.op[0x82] = () => { this.reg.pc++; return 2; };
+        this.op[0xc2] = () => { this.reg.pc++; return 2; };
+        this.op[0xe2] = () => { this.reg.pc++; return 2; };
+        this.op[0x44] = () => { this.reg.pc++; return 3; };
+        this.op[0x54] = () => { this.reg.pc++; return 4; };
+        this.op[0xd4] = () => { this.reg.pc++; return 4; };
+        this.op[0xf4] = () => { this.reg.pc++; return 4; };
+        this.op[0xdc] = () => { this.reg.pc+=2; return 4; };
+        this.op[0xfc] = () => { this.reg.pc+=2; return 4; };
+        this.op[0x5c] = () => { this.reg.pc+=2; return 8; };
     }
 
     reset() {
