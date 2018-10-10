@@ -951,7 +951,7 @@ class W65C02S
         const opcode = this.mem.read(this.reg.pc++);
         const opfcn = this.op[opcode];
         if(!opfcn) {
-            console.log("!!!! illegal opcode: 0x" + opcode.toString(16).padStart(2, '0'));
+            console.log("!!!! illegal opcode: 0x" + opcode.toString(16).padStart(2, '0') + "  pc: 0x" + (this.reg.pc-1).toString(16).padStart(4, '0'));
             return -1;  // TODO: ensure all 256 positions are covered
         }
         return opfcn();
