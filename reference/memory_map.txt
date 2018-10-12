@@ -1,0 +1,96 @@
+
+0000-00ff zero page     (256)
+0100-01ff stack         (256)
+0200-03ff memory        (512)
+0400-07ff text page 1  (1024)
+0800-0bff text page 2  (1024)
+0c00-1fff memory       (1400)
+2000-3fff hires page 1 (8192)
+4000-5fff hires page 2 (8192)
+6000-c000 memory        (24k)
+c000-c0ff io switches   (256)
+c100-cfff slots        (3840)
+c100-cfff ROM          (3840)
+d000-dfff ROM          (4096)
+e000-efff ROM          (4096)
+f000-ffff ROM          (4096)
+
+
+altzp: true
+  0000-01ff: aux memory
+altzp: false
+  0000-01ff: main memory
+
+
+aux ram read: true
+  200-bfff: aux memory
+aux ram read: false
+  200-bfff: main memory
+
+aux ram write: true
+  200-bfff: aux memory
+aux ram write: false
+  200-bfff: main memory
+
+
+80store: true
+  hires: true
+    page2: true
+      400-7ff: aux memory
+      2000-3fff: aux memory
+    page2: false
+      400-7ff: main memory
+      2000-3fff: main memory
+  hires: false
+    page2: true
+      400-7ff: aux memory
+    page2: false
+      400-7ff: main memory
+
+
+cx rom read: true
+  c100-cfff: cx-rom
+cx rom read: false
+  c100-cfff: io
+
+c3 rom read: true
+  c300-c3ff: c3-rom
+c3 rom read: false
+  c300-c3ff: io
+
+c8 rom read: true
+  c800-c3ff: c8-rom
+c8 rom read: false
+  c800-cfff: io
+
+
+bank switch read: true
+  bank2: true
+    altzp: true
+      d000-dfff: aux_b memory
+    altzp: false
+      d000-dfff: main_b memory
+  bank2: false
+    altzp: true
+      d000-ffff: aux memory
+    altzp: false
+      d000-ffff: main memory
+bank switch read: false
+  d000-ffff: rom
+
+
+bank switch write: true
+  bank2: true
+    altzp: true
+      d000-dfff: aux_b memory
+    altzp: false
+      d000-dfff: main_b memory
+  bank2: false
+    altzp: true
+      d000-ffff: aux memory
+    altzp: false
+      d000-ffff: main memory
+bank switch write: false
+  d000-ffff: rom (discard)
+
+
