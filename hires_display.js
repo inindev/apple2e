@@ -20,7 +20,7 @@
 
 class HiresDisplay
 {
-    constructor(canvas, lines) {
+    constructor(canvas, hlines, vlines) {
         canvas.width = 564;  // 7*2*40 + 4
         canvas.height = 390; // 8*2*24 + 6
         this.context = canvas.getContext('2d', {alpha: false});
@@ -28,7 +28,7 @@ class HiresDisplay
         this.context.imageSmoothingQuality = "high";
 
         // color palette
-        this.violet = 0xff22dd;
+        this.purple = 0xff22dd;
         this.blue   = 0x2222ff;
         this.green  = 0x11dd00;
         this.orange = 0xff6600;
@@ -36,7 +36,7 @@ class HiresDisplay
         this.white  = 0xffffff;
 
         // horizontal scan line color
-        this.violet_hscan = 55;
+        this.purple_hscan = 55;
         this.blue_hscan   = 55;
         this.green_hscan  = 55;
         this.orange_hscan = 55;
@@ -44,15 +44,15 @@ class HiresDisplay
         this.white_hscan  = 55;
 
         // vertical scan line color
-        this.violet_vscan = 77;
+        this.purple_vscan = 77;
         this.blue_vscan   = 77;
         this.green_vscan  = 77;
         this.orange_vscan = 77;
         this.black_vscan  = 100;
         this.white_vscan  = 100;
 
-        this._hlines = false;
-        this._vlines = true;
+        this._hlines = hlines == undefined ? false : hlines;
+        this._vlines = vlines == undefined ? true : vlines;
 
         this.reset();
     }
@@ -108,16 +108,16 @@ class HiresDisplay
 
 
     init_color_table() {
-        const fviolet = this.get_color_fcn(this.violet, this.violet_hscan, this.violet_vscan);
+        const fpurple = this.get_color_fcn(this.purple, this.purple_hscan, this.purple_vscan);
         const fblue   = this.get_color_fcn(this.blue,   this.blue_hscan,   this.blue_vscan);
         const fgreen  = this.get_color_fcn(this.green,  this.green_hscan,  this.green_vscan);
         const forange = this.get_color_fcn(this.orange, this.orange_hscan, this.orange_vscan);
         const fblack  = this.get_color_fcn(this.black,  this.black_hscan,  this.black_vscan);
         const fwhite  = this.get_color_fcn(this.white,  this.white_hscan,  this.white_vscan);
 
-        // green / violet   000     001      010     011     100      101     110     111
-        const group1e = [fblack, fblack, fgreen,  fwhite, fblack, fviolet, fwhite, fwhite];
-        const group1o = [fblack, fblack, fviolet, fwhite, fblack, fgreen,  fwhite, fwhite];
+        // green / purple   000     001      010     011     100      101     110     111
+        const group1e = [fblack, fblack, fgreen,  fwhite, fblack, fpurple, fwhite, fwhite];
+        const group1o = [fblack, fblack, fpurple, fwhite, fblack, fgreen,  fwhite, fwhite];
         // orange / blue    000     001      010     011     100      101     110     111
         const group2e = [fblack, fblack, forange, fwhite, fblack, fblue,   fwhite, fwhite];
         const group2o = [fblack, fblack, fblue,   fwhite, fblack, forange, fwhite, fwhite];
@@ -154,7 +154,7 @@ class HiresDisplay
         // group 1                     v         v
         //   0) black1: 00 00 00 00 -> 0000:0000 0000:0000 -> 0+00000000000000
         //   1) green : 2a 55 2a 55 -> 0010:1010 0101:0101 -> 0+01010101010101
-        //   2) violet: 55 2a 55 2a -> 0101:0101 0010:1010 -> 0+10101010101010
+        //   2) purple: 55 2a 55 2a -> 0101:0101 0010:1010 -> 0+10101010101010
         //   3) white1: 7f 7f 7f 7f -> 0111:1111 0111:1111 -> 0+11111111111111
         //
         // group 2                     v         v

@@ -18,7 +18,7 @@ class TextDisplay
 
         this.fore = fore || 0x00ff66; // green
         this.back = back || 0x111111; // almost black
-        this.hlines = hlines == undefined;
+        this.hlines = hlines == undefined ? true : hlines;
 
         this.reset();
     }
