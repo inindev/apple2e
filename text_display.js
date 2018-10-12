@@ -13,7 +13,7 @@ class TextDisplay
         this._font_rom = font_rom;
 
         canvas.width = 564;  // 7*2*40 + 4
-        canvas.height = 388; // 8*2*24 + 4
+        canvas.height = 390; // 8*2*24 + 6
         this._context = canvas.getContext('2d', {alpha: false});
 
         this.fore = fore || 0x00ff66; // green
@@ -72,7 +72,7 @@ class TextDisplay
         if((row > 23) || (col > 39)) return;
 
         const ox = (col * 14)+2;
-        const oy = (row * 16)+2;
+        const oy = (row * 16)+4;
 
         const id = this._context.getImageData(ox, oy, 14, 16);
         const data = id.data;
@@ -104,8 +104,8 @@ class TextDisplay
 
 
     reset() {
-        const id = this._context.createImageData(564, 388);
-        const imax = 564 * 388 * 4; // (560+4, 384+4) * rgba
+        const id = this._context.createImageData(564, 390);
+        const imax = 564 * 390 * 4; // (560+4, 384+6) * rgba
         for(let i=0; i<imax; i+=4) {
             id.data[i]   = this._br;
             id.data[i+1] = this._bg;

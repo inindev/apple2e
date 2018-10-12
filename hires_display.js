@@ -22,7 +22,7 @@ class HiresDisplay
 {
     constructor(canvas, lines) {
         canvas.width = 564;  // 7*2*40 + 4
-        canvas.height = 388; // 8*2*24 + 4
+        canvas.height = 390; // 8*2*24 + 6
         this.context = canvas.getContext('2d', {alpha: false});
         this.context.imageSmoothingEnabled = true;
         this.context.imageSmoothingQuality = "high";
@@ -199,7 +199,7 @@ class HiresDisplay
 
         // row: 0-191, col: 0-39
         const ox = (col * 14) + 1;
-        const oy = (row * 2) + 2;
+        const oy = (row * 2) + 3;
 
         const id = this.context.getImageData(ox, oy, 18, 2);
 
@@ -219,8 +219,8 @@ class HiresDisplay
         const r = (this.black >> 16) & 0xff;
         const g = (this.black >> 8) & 0xff;
         const b = this.black & 0xff;
-        const id = this.context.createImageData(564, 388);
-        const imax = 564 * 388 * 4; // (560+4, 384+4) * rgba
+        const id = this.context.createImageData(564, 390);
+        const imax = 564 * 390 * 4; // (560+4, 384+6) * rgba
         for(let i=0; i<imax; i+=4) {
             id.data[i]   = r;
             id.data[i+1] = g;
