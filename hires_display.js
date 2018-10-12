@@ -83,25 +83,25 @@ class HiresDisplay
                 data[x]   = data[x+4] = r;
                 data[x+1] = data[x+5] = g;
                 data[x+2] = data[x+6] = b;
-                data[x+56] = data[x+60] = rhs;
-                data[x+57] = data[x+61] = ghs;
-                data[x+58] = data[x+62] = bhs;
+                data[x+72] = data[x+76] = rhs;
+                data[x+73] = data[x+77] = ghs;
+                data[x+74] = data[x+78] = bhs;
                 draw = false;
             }
 
             if(this._vlines && ((col + (x>>3)) & 0x01)) {
                 // in a vertical scan bar
-                data[x]   = data[x+4] = data[x+56] = data[x+60] = rvs;
-                data[x+1] = data[x+5] = data[x+57] = data[x+61] = gvs;
-                data[x+2] = data[x+6] = data[x+58] = data[x+62] = bvs;
+                data[x]   = data[x+4] = data[x+72] = data[x+76] = rvs;
+                data[x+1] = data[x+5] = data[x+73] = data[x+77] = gvs;
+                data[x+2] = data[x+6] = data[x+74] = data[x+78] = bvs;
                 draw = false;
             }
 
             if(draw) {
                 // regular color
-                data[x]   = data[x+4] = data[x+56] = data[x+60] = r;
-                data[x+1] = data[x+5] = data[x+57] = data[x+61] = g;
-                data[x+2] = data[x+6] = data[x+58] = data[x+62] = b;
+                data[x]   = data[x+4] = data[x+72] = data[x+76] = r;
+                data[x+1] = data[x+5] = data[x+73] = data[x+77] = g;
+                data[x+2] = data[x+6] = data[x+74] = data[x+78] = b;
             }
         };
     }
@@ -164,43 +164,53 @@ class HiresDisplay
         //   7) white2: ff ff ff ff -> 1111 1111 1111 1111 -> 1+11111111111111
         const color_group = (val & 0x80) ? this.group2 : this.group1;
 
-        // pixels are evaluated in three bit groups, this requires evaluating
-        // a total of nine bits to produce 7 pixels of output (one column)
-        // if the screen is drawn left-to-right, the extra bits can be taken
-        // from the two msbs of the previous column (or zero for the first column)
-        //
-        //       +v+  -> pix6
-        // 876543210
-        //      +v+   -> pix5
-        // 876543210
-        //     +v+    -> pix4
-        // 876543210
-        //    +v+     -> pix3
-        // 876543210
-        //   +v+      -> pix2
-        // 876543210
-        //  +v+       -> pix1
-        // 876543210
-        // +v+        -> pix0
-        // 876543210
+        // one column is seven pixels but pixels 0 & 6 are dependent on the pixel values
+        // in the adjacent columns requiring a full 9 pixel draw to prevent artifacting
+        // pixels are evaluated in three bit groups, this requires evaluating a total of eleven
+        // bits to produce nine pixels of output (one column with one pixel overlap each side)
+
+        //          +v+  -> pix8 (+1)
+        //  56012345601
+        //         +v+   -> pix7
+        //  56012345601
+        //        +v+    -> pix6
+        //  56012345601
+        //       +v+     -> pix5
+        //  56012345601
+        //      +v+      -> pix4
+        //  56012345601
+        //     +v+       -> pix3
+        //  56012345601
+        //    +v+        -> pix2
+        //  56012345601
+        //   +v+         -> pix1
+        //  56012345601
+        //  +v+          -> pix0 (-1)
+        //  56012345601
+        //  ppcccccccnn
         const prev = (col < 1) ? 0 : mem.read(addr-1);
-        const orig = val;
-        val = (val << 2) | ((prev >> 5) & 0x03);
+        const next = (col > 38) ? 0 : mem.read(addr+1);
+
+        //     <--- read ---
+        // nnnnnnncccccccppppppp
+        // 654321065432106543210
+        //      ^^^^^^^^^^^
+        val = (next << 9) | ((val << 2) & 0x1fc) | ((prev >> 5) & 0x03);
 
         // row: 0-191, col: 0-39
         const ox = (col * 14) + 1;
         const oy = (row * 2) + 2;
 
-        const id = this.context.getImageData(ox, oy, 14, 2);
+        const id = this.context.getImageData(ox, oy, 18, 2);
 
         let oe = (col & 0x01);
-        for(let x=0; x<56; x+=8) {
+        for(let x=0; x<72; x+=8) {
             color_group[oe][val & 0x07](id.data, col, x);
             val >>= 1;
             oe ^= 1;
         }
 
-        this.context.putImageData(id, ox, oy, 0, 0, 14, 2);
+        this.context.putImageData(id, ox, oy, 0, 0, 18, 2);
     }
 
 
