@@ -14,7 +14,7 @@
         font-size: 13px;
         font-family: "Lucida Console", Monaco, monospace;
         background: #e1e1d0;
-      }
+    }
     canvas.screen {
         margin: 1.4em;
         min-width: 800;
@@ -93,7 +93,6 @@
   <script src="rom/342-0265-a.js"></script>
   <script src="rom/342-0304-cd.js"></script>
   <script src="rom/342-0303-ef.js"></script>
-
   <script>
     const mem = new Memory(rom_342_0304_cd, rom_342_0303_ef);
     const cpu = new W65C02S(mem);
@@ -108,14 +107,6 @@
     let interval;
     let last_ms;
 
-
-    function run_toggle() {
-        if(interval) {
-            stop();
-        } else {
-            run();
-        }
-    }
 
     function stop() {
         run_stop_btn.innerText = "run";
@@ -162,7 +153,7 @@
     function init() {
         const screen = document.querySelector("canvas.screen");
         display_text = new TextDisplay(rom_342_0265_a, screen);
-        display_hires = new HiresDisplay(screen);
+        display_hires = new HiresDisplay(screen, false, false);
 
         io_mgr = new IOManager(mem, kbd, display_text, display_hires);
 
@@ -170,7 +161,7 @@
         document.addEventListener('keyup', kbd.key_up.bind(kbd));
 
         run_stop_btn = document.getElementById("run_stop");
-        run_stop_btn.addEventListener("click", run_toggle);
+        run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
         document.getElementById("reset").addEventListener("click", reset);
 
         cycles = 0;

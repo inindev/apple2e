@@ -25,6 +25,7 @@ class IOManager
         this._c8_rom = false;
         this._cx_rom = false;
 
+        this._text_mode = true;
         this._bsr_write_count = 0;
 
         this._mem.add_read_hook(this.read.bind(this));
@@ -66,38 +67,48 @@ class IOManager
                 case 0xc018: // 80store (0: 80store off, 0x80: 80store on)
                     //console.log("80 store: " + this._mem.dms_80store);
                     return this._mem.dms_80store ? 0x80 : 0;
+
                 case 0xc01a: // text (0: graphics mode, 0x80: text mode)
-                    return this._mem.dms_hires ? 0 : 0x80; // TODO: double check this
+                    return this._text_mode ? 0x80 : 0;
+
                 case 0xc01c: // page2 (0: main, 0x80: aux)
                     return this._mem.dms_page2 ? 0x80 : 0;
                 case 0xc01d: // hires (0: main, 0x80: aux)
                     return this._mem.dms_hires ? 0x80 : 0;
+
+                case 0xc050: // text mode off
+                    console.log("text mode off (read)");
+                    this._text_mode = false;
+                case 0xc051: // text mode on
+                    console.log("text mode on (read)");
+                    this._text_mode = true;
+
                 case 0xc054: // page2 off
                     //console.log("page2 off (read)");
                     if(this._mem.dms_page2) {
                         this._mem.dms_page2 = false;
-                        if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
+//                        if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
                     }
                     return 0;
                 case 0xc055: // page2 on
                     //console.log("page2 on (read)");
                     if(!this._mem.dms_page2) {
                         this._mem.dms_page2 = true;
-                        if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
+//                        if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
                     }
                     return 0;
                 case 0xc056: // hires off
                     //console.log("hires off (read)");
                     if(this._mem.dms_hires) {
                         this._mem.dms_hires = false;
-                        if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
+//                        if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
                     }
                     return 0;
                 case 0xc057: // hires on
                     //console.log("hires on (read)");
                     if(!this._mem.dms_hires) {
                         this._mem.dms_hires = true;
-                        if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
+//                        if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
                     }
                     return 0;
                 default:
@@ -178,7 +189,9 @@ class IOManager
                     return undefined; // commit to ram
                 }
             }
-        } else {
+        }
+
+        else if(this._text_mode) {
             if(this._mem.dms_page2) {
                 // 0800-0bff: text page 2
                 if((addr & 0xfc00) == 0x0800) {
@@ -193,6 +206,7 @@ class IOManager
                 }
             }
         }
+
 
         // c000-c0ff: write switches
         if((addr & 0xff00) == 0xc000) {
@@ -250,32 +264,40 @@ class IOManager
                 case 0xc010: // keyboard strobe
                     this._kbd.key = 0x7f;
                     return 0; // write handled
+
+                case 0xc050: // text mode off
+                    console.log("text mode off (write)");
+                    this._text_mode = false;
+                case 0xc051: // text mode on
+                    console.log("text mode on (write)");
+                    this._text_mode = true;
+
                 case 0xc054: // page2 off
                     //console.log("page2 off (write)");
                     if(this._mem.dms_page2) {
                         this._mem.dms_page2 = false;
-                        if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
+//                        if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
                     }
                     return 0;
                 case 0xc055: // page2 on
                     //console.log("page2 on (write)");
                     if(!this._mem.dms_page2) {
                         this._mem.dms_page2 = true;
-                        if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
+//                        if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
                     }
                     return 0;
                 case 0xc056: // hires off
                     //console.log("hires off (write)");
                     if(this._mem.dms_hires) {
                         this._mem.dms_hires = false;
-                        if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
+//                        if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
                     }
                     return 0;
                 case 0xc057: // hires on
                     //console.log("hires on (write)");
                     if(!this._mem.dms_hires) {
                         this._mem.dms_hires = true;
-                        if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
+//                        if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
                     }
                     return 0;
                 default:
