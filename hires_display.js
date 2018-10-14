@@ -18,7 +18,7 @@
 //
 
 
-class HiresDisplay
+export class HiresDisplay
 {
     constructor(canvas, hlines, vlines) {
         canvas.width = 564;  // 7*2*40 + 4
@@ -49,8 +49,8 @@ class HiresDisplay
         this.black_vscan  = 100;
         this.white_vscan  = 100;
 
-        this.hlines = hlines == undefined ? false : hlines;
-        this.vlines = vlines == undefined ? true : vlines;
+        this.hlines = hlines || false;
+        this.vlines = vlines;
 
         this.reset();
     }

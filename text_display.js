@@ -7,7 +7,8 @@
 //  https://www.gnu.org/licenses/gpl.html
 //
 
-class TextDisplay
+
+export class TextDisplay
 {
     constructor(font_rom, canvas, hlines, fore, back) {
         this._font_rom = font_rom;
@@ -16,7 +17,7 @@ class TextDisplay
         canvas.height = 390; // 8*2*24 + 6
         this._context = canvas.getContext('2d', {alpha: false});
 
-        this.hlines = hlines == undefined ? true : hlines;
+        this.hlines = hlines;
 
         this.fore = fore || 0x00ff66; // green
         this.back = back || 0x111111; // almost black

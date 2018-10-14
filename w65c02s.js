@@ -116,6 +116,7 @@ const opdef = [
 ];
 
 
+////////////////////////////////////////////
 class Flags6502
 {
     constructor() {
@@ -190,6 +191,7 @@ class Flags6502
 }
 
 
+////////////////////////////////////////////
 class Register6502
 {
     constructor() {
@@ -235,7 +237,8 @@ class Register6502
 }
 
 
-class W65C02S
+////////////////////////////////////////////
+export class W65C02S
 {
     constructor(memory) {
         this.mem = memory;
@@ -994,7 +997,6 @@ class W65C02S
         //    14: zero_page_y              zp,y    Zero Page Indexed with Y
         //    15: zero_page_indirect       (zp)    Zero Page Indirect
         //    16: zero_page_indirect_y     (zp),y  Zero Page Indirect Indexed with Y
-
         const pop_byte_pc = () => { return this.mem.read(this.reg.pc++); };
         const pop_word_pc = () => { return pop_byte_pc() | pop_byte_pc()<<8; };
 

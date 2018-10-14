@@ -10,9 +10,9 @@
 //
 
 
-class Keyboard
+export class Keyboard
 {
-    constructor(bytes) {
+    constructor() {
         this._key = 0x7f;
         this._key_pressed = false;
 
@@ -58,16 +58,6 @@ class Keyboard
             0xdd: 0x7d, // } (right curly bracket)
             0xde: 0x22, // " (double quote)
         };
-
-        if(navigator.userAgent.toLowerCase().indexOf('firefox') < 0) {
-            // not firefox
-            this.key_map[0xba] = 0x3b; // ; (semicolon)
-            this.key_map[0xbb] = 0x3d; // = (equal)
-            this.key_map[0xbd] = 0xad; // - (minus)
-            this.key_map_shift[0xba] = 0x3a; // : (colon)
-            this.key_map_shift[0xbb] = 0x2b; // + (plus)
-            this.key_map_shift[0xbd] = 0x5f; // _ (underbar)
-        }
     }
 
     get key() { return this._key; };
@@ -75,42 +65,37 @@ class Keyboard
     get key_pressed() { return this._key_pressed; };
     set key_pressed(val) { this._key_pressed = (val != 0); }
 
-    key_down(event) {
-        if(!event.metaKey) {  // TODO: ignore meta?
-            event.preventDefault();
-        }
+    key_down(code, shift, ctrl, meta) {
         this._key_pressed = true;
 
-        let key = event.keyCode;
-
         // control
-        if(event.ctrlKey) {
-            if(key in this.key_map_ctrl) {
-                key = this.key_map_ctrl[key];
+        if(ctrl) {
+            if(code in this.key_map_ctrl) {
+                code = this.key_map_ctrl[code];
             } else {
                 return; // unknown control key
             }
         }
 
         // shift
-        else if(event.shiftKey) {
-            if(key in this.key_map_shift) {
-                key = this.key_map_shift[key];
+        else if(shift) {
+            if(code in this.key_map_shift) {
+                code = this.key_map_shift[code];
             } else {
                 return; // unknown shift key
             }
         }
 
         // regular keys
-        else if(key in this.key_map) {
-            key = this.key_map[key];
+        else if(code in this.key_map) {
+            code = this.key_map[code];
         }
 
-        this._key = key | 0x80;
+        this._key = code | 0x80;
     }
 
 
-    key_up(event) {
+    key_up() {
         this._key_pressed = false;
     }
 }

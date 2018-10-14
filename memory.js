@@ -13,7 +13,7 @@
 //
 
 
-class Memory
+export class Memory
 {
     constructor(rom_cd, rom_ef) {
         this._rom_cd = rom_cd;

@@ -29,8 +29,8 @@
         background: #111;
         border: 2px solid #5b4125;
         box-shadow:
-            inset 0 0 0 2px #cdcdb1,
-            inset 0 0 0 4px #5b4125;
+          inset 0 0 0 2px #afaf83,
+          inset 0 0 0 4px #5b4125;
     }
     div.col1>div:nth-child(2) {
         margin-left: 2em;
@@ -96,30 +96,13 @@
     <div class="col3">
     </div>
   </div>
+  <script type="module">
+    import {Motherboard} from "/motherboard.js";
 
-  <script src="w65c02s.js"></script>
-  <script src="memory.js"></script>
-  <script src="io_manager.js"></script>
-  <script src="text_display.js"></script>
-  <script src="hires_display.js"></script>
-  <script src="keyboard.js"></script>
-  <script src="rom/342-0265-a.js"></script>
-  <script src="rom/342-0304-cd.js"></script>
-  <script src="rom/342-0303-ef.js"></script>
-  <script>
-    const mem = new Memory(rom_342_0304_cd, rom_342_0303_ef);
-    const cpu = new W65C02S(mem);
-    const kbd = new Keyboard();
-
-    let io_mgr;
-    let display_text;
-    let display_hires;
-
+    let motherboard;
     let run_stop_btn;
-    let cycles;
     let interval;
     let last_ms;
-
 
     function stop() {
         run_stop_btn.innerText = "run";
@@ -132,56 +115,50 @@
     function run() {
         run_stop_btn.innerText = "stop";
         if(interval) return;
-
         last_ms = performance.now();
         interval = window.requestAnimationFrame(on_interval);
     }
 
     function on_interval(now_ms) {
-        const interval_cycles = (((now_ms-last_ms) * 1023) & 0x7fff) + cycles;
+        const cycles = ((now_ms - last_ms) * 1023) & 0x7fff; // 1023 cyc/ms
         last_ms = now_ms;
-        while(cycles < interval_cycles) {
-           cycles += cpu.step();
-        };
+        motherboard.clock(cycles);
         interval = window.requestAnimationFrame(on_interval);
     }
 
     function reset(event) {
         const was_stopped = !interval;
         stop();
-
-        cpu.reset();
-        display_text.reset();
-        display_hires.reset();
-        cycles = 0;
-
-        if(event && (event.shiftKey || event.altKey || event.metaKey)) {
-            mem.reset(); // hard reset
-        }
-
-        cpu.register.pc = mem.read_word(0xfffc);
+        const cold = event && (event.shiftKey || event.altKey || event.metaKey);
+        motherboard.reset(cold);
         if(!was_stopped) run();
     }
 
+    function key_down(e) {
+        if(!e.metaKey) e.preventDefault();
+        motherboard.key_down(e.keyCode, e.shiftKey, e.ctrlKey, e.metaKey);
+    }
+    function key_down_trans(e) {
+        if(!e.metaKey) e.preventDefault();
+        const code = {0xba:0x3b, 0xbb:0x3d, 0xbd:0xad}[e.keyCode] || e.keyCode; // ; = -
+        motherboard.key_down(code, e.shiftKey, e.ctrlKey, e.metaKey);
+    }
+
     function init() {
-        const screen = document.querySelector("canvas.screen");
-        display_text = new TextDisplay(rom_342_0265_a, screen);
-        display_hires = new HiresDisplay(screen, false, true);
+        const canvas = document.querySelector("canvas.screen");
+        motherboard = new Motherboard(canvas);
+        motherboard.reset();
 
-        io_mgr = new IOManager(mem, kbd, display_text, display_hires);
-
-        document.addEventListener('keydown', kbd.key_down.bind(kbd));
-        document.addEventListener('keyup', kbd.key_up.bind(kbd));
+        const ff = navigator.userAgent.toLowerCase().indexOf('firefox') > 0;
+        document.addEventListener('keydown', ff?key_down:key_down_trans);
+        document.addEventListener('keyup', motherboard.key_up.bind(motherboard));
 
         run_stop_btn = document.getElementById("run_stop");
-        run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
+        run_stop_btn.addEventListener("click", ()=>{ (interval?stop:run)(); });
         document.getElementById("reset").addEventListener("click", reset);
 
-        cycles = 0;
-        cpu.register.pc = mem.read_word(0xfffc);
-
         const msg = 'press "run" below to start vm';
-        for(let i=0; i<msg.length; i++) display_text.draw_text(mem, 0x042d+i, msg.charCodeAt(i)+0x80);
+        motherboard.message(msg);
     }
 
     if(document.readyState === "loading") {

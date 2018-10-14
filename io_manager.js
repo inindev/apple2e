@@ -13,7 +13,7 @@
 //
 
 
-class IOManager
+export class IOManager
 {
     constructor(memory, keyboard, display_text, display_hires) {
         this._mem = memory;
@@ -137,6 +137,9 @@ class IOManager
                 //console.log("bank select (read) ["+addr.toString(16)+"], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
             }
 
+            // slots begin at 0xc090
+            if(addr > 0xc08f) return undefined;
+
             return 0; // all other c0xx flags report 0
         }
 
@@ -168,8 +171,6 @@ class IOManager
             }
             return undefined; // default c8 rom read
         }
-
-        return 0; // all other cxxx values report 0
     }
 
 
@@ -278,28 +279,28 @@ class IOManager
                         this._mem.dms_page2 = false;
 //                        if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
                     }
-                    return 0;
+                    return 0; // write handled
                 case 0xc055: // page2 on
                     //console.log("page2 on (write)");
                     if(!this._mem.dms_page2) {
                         this._mem.dms_page2 = true;
 //                        if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
                     }
-                    return 0;
+                    return 0; // write handled
                 case 0xc056: // hires off
                     //console.log("hires off (write)");
                     if(this._mem.dms_hires) {
                         this._mem.dms_hires = false;
 //                        if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
                     }
-                    return 0;
+                    return 0; // write handled
                 case 0xc057: // hires on
                     //console.log("hires on (write)");
                     if(!this._mem.dms_hires) {
                         this._mem.dms_hires = true;
 //                        if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
                     }
-                    return 0;
+                    return 0; // write handled
                 default:
                     break;
             }
@@ -326,6 +327,9 @@ class IOManager
                 //console.log("bank select (write) ["+addr.toString(16)+"], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
                 return 0; // write handled
             }
+
+            // slots begin at 0xc090
+            if(addr > 0xc08f) return undefined;
 
             return 0; // write handled
         }
