@@ -24,8 +24,6 @@ class HiresDisplay
         canvas.width = 564;  // 7*2*40 + 4
         canvas.height = 390; // 8*2*24 + 6
         this.context = canvas.getContext('2d', {alpha: false});
-        this.context.imageSmoothingEnabled = true;
-        this.context.imageSmoothingQuality = "high";
 
         // color palette
         this.purple = 0xff22dd;
@@ -76,21 +74,21 @@ class HiresDisplay
         const gvs = Math.floor((g * vscan) / 100);
         const bvs = Math.floor((b * vscan) / 100);
 
-        return (data, col, x) => {
+        return (data, oe, x) => {
             let draw = true;
             if(this._hlines) {
-                // in a horizontal scan bar
                 data[x]   = data[x+4] = r;
                 data[x+1] = data[x+5] = g;
                 data[x+2] = data[x+6] = b;
+                // horizontal scan bar
                 data[x+72] = data[x+76] = rhs;
                 data[x+73] = data[x+77] = ghs;
                 data[x+74] = data[x+78] = bhs;
                 draw = false;
             }
 
-            if(this._vlines && ((col + (x>>3)) & 0x01)) {
-                // in a vertical scan bar
+            if(this._vlines && !oe) {
+                // vertical scan bar
                 data[x]   = data[x+4] = data[x+72] = data[x+76] = rvs;
                 data[x+1] = data[x+5] = data[x+73] = data[x+77] = gvs;
                 data[x+2] = data[x+6] = data[x+74] = data[x+78] = bvs;
@@ -203,9 +201,9 @@ class HiresDisplay
 
         const id = this.context.getImageData(ox, oy, 18, 2);
 
-        let oe = (col & 0x01);
+        let oe = col & 0x01;
         for(let x=0; x<72; x+=8) {
-            color_group[oe][val & 0x07](id.data, col, x);
+            color_group[oe][val & 0x07](id.data, oe, x);
             val >>= 1;
             oe ^= 1;
         }
