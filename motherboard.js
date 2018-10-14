@@ -9,15 +9,15 @@
 //  ref: https://en.wikipedia.org/wiki/Apple_II_character_set
 //
 
-import {W65C02S} from "/w65c02s.js";
-import {Memory} from "/memory.js";
-import {IOManager} from "/io_manager.js";
-import {TextDisplay} from "/text_display.js";
-import {HiresDisplay} from "/hires_display.js";
-import {Keyboard} from "/keyboard.js";
-import {rom_342_0265_a} from "/rom/342-0265-a.js";
-import {rom_342_0304_cd} from "/rom/342-0304-cd.js";
-import {rom_342_0303_ef} from "/rom/342-0303-ef.js";
+import {W65C02S} from "./w65c02s.js";
+import {Memory} from "./memory.js";
+import {IOManager} from "./io_manager.js";
+import {TextDisplay} from "./text_display.js";
+import {HiresDisplay} from "./hires_display.js";
+import {Keyboard} from "./keyboard.js";
+import {rom_342_0265_a} from "./rom/342-0265-a.js";
+import {rom_342_0304_cd} from "./rom/342-0304-cd.js";
+import {rom_342_0303_ef} from "./rom/342-0303-ef.js";
 
 
 export class Motherboard
