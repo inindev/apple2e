@@ -23,7 +23,7 @@ class HiresDisplay
     constructor(canvas, hlines, vlines) {
         canvas.width = 564;  // 7*2*40 + 4
         canvas.height = 390; // 8*2*24 + 6
-        this.context = canvas.getContext('2d', {alpha: false});
+        this._context = canvas.getContext('2d', {alpha: false});
 
         // color palette
         this.purple = 0xff22dd;
@@ -34,23 +34,23 @@ class HiresDisplay
         this.white  = 0xffffff;
 
         // horizontal scan line color
-        this.purple_hscan = 55;
-        this.blue_hscan   = 55;
-        this.green_hscan  = 55;
-        this.orange_hscan = 55;
+        this.purple_hscan = 52;
+        this.blue_hscan   = 52;
+        this.green_hscan  = 52;
+        this.orange_hscan = 52;
         this.black_hscan  = 100;  // scan lines do not look good on black
-        this.white_hscan  = 55;
+        this.white_hscan  = 52;
 
         // vertical scan line color
-        this.purple_vscan = 77;
-        this.blue_vscan   = 77;
-        this.green_vscan  = 77;
-        this.orange_vscan = 77;
+        this.purple_vscan = 72;
+        this.blue_vscan   = 72;
+        this.green_vscan  = 72;
+        this.orange_vscan = 72;
         this.black_vscan  = 100;
         this.white_vscan  = 100;
 
-        this._hlines = hlines == undefined ? false : hlines;
-        this._vlines = vlines == undefined ? true : vlines;
+        this.hlines = hlines == undefined ? false : hlines;
+        this.vlines = vlines == undefined ? true : vlines;
 
         this.reset();
     }
@@ -199,7 +199,7 @@ class HiresDisplay
         const ox = (col * 14) + 1;
         const oy = (row * 2) + 3;
 
-        const id = this.context.getImageData(ox, oy, 18, 2);
+        const id = this._context.getImageData(ox, oy, 18, 2);
 
         let oe = col & 0x01;
         for(let x=0; x<72; x+=8) {
@@ -208,7 +208,7 @@ class HiresDisplay
             oe ^= 1;
         }
 
-        this.context.putImageData(id, ox, oy, 0, 0, 18, 2);
+        this._context.putImageData(id, ox, oy, 0, 0, 18, 2);
     }
 
 
@@ -217,7 +217,7 @@ class HiresDisplay
         const r = (this.black >> 16) & 0xff;
         const g = (this.black >> 8) & 0xff;
         const b = this.black & 0xff;
-        const id = this.context.createImageData(564, 390);
+        const id = this._context.createImageData(564, 390);
         const imax = 564 * 390 * 4; // (560+4, 384+6) * rgba
         for(let i=0; i<imax; i+=4) {
             id.data[i]   = r;
@@ -225,6 +225,6 @@ class HiresDisplay
             id.data[i+2] = b;
             id.data[i+3] = 0xff;
         }
-        this.context.putImageData(id, 0, 0);
+        this._context.putImageData(id, 0, 0);
     }
 }

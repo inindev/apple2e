@@ -9,16 +9,17 @@
 
 class TextDisplay
 {
-    constructor(font_rom, canvas, fore, back, hlines) {
+    constructor(font_rom, canvas, hlines, fore, back) {
         this._font_rom = font_rom;
 
         canvas.width = 564;  // 7*2*40 + 4
         canvas.height = 390; // 8*2*24 + 6
         this._context = canvas.getContext('2d', {alpha: false});
 
+        this.hlines = hlines == undefined ? true : hlines;
+
         this.fore = fore || 0x00ff66; // green
         this.back = back || 0x111111; // almost black
-        this.hlines = hlines == undefined ? true : hlines;
 
         this.reset();
     }
@@ -71,8 +72,8 @@ class TextDisplay
     draw_char40(row, col, char) {
         if((row > 23) || (col > 39)) return;
 
-        const ox = (col * 14)+2;
-        const oy = (row * 16)+4;
+        const ox = (col * 14) + 2;
+        const oy = (row * 16) + 4;
 
         const id = this._context.getImageData(ox, oy, 14, 16);
         const data = id.data;
@@ -82,18 +83,18 @@ class TextDisplay
         for(let y=0; y<64; y+=8) {
             let cp = this._font_rom[csl++];
             for(let x=0; x<56; x+=8) {
-                const pos = x + y * 14;
+                const p = x + y * 14;
                 if(cp & 0x01) {
-                    data[pos]   = data[pos+4] = data[pos+56] = data[pos+60] = this._br;
-                    data[pos+1] = data[pos+5] = data[pos+57] = data[pos+61] = this._bg;
-                    data[pos+2] = data[pos+6] = data[pos+58] = data[pos+62] = this._bb;
+                    data[p]   = data[p+4] = data[p+56] = data[p+60] = this._br;
+                    data[p+1] = data[p+5] = data[p+57] = data[p+61] = this._bg;
+                    data[p+2] = data[p+6] = data[p+58] = data[p+62] = this._bb;
                 } else {
-                    data[pos]    = data[pos+4]  = this._fr;
-                    data[pos+1]  = data[pos+5]  = this._fg;
-                    data[pos+2]  = data[pos+6]  = this._fb;
-                    data[pos+56] = data[pos+60] = this._frl;
-                    data[pos+57] = data[pos+61] = this._fgl;
-                    data[pos+58] = data[pos+62] = this._fbl;
+                    data[p]    = data[p+4]  = this._fr;
+                    data[p+1]  = data[p+5]  = this._fg;
+                    data[p+2]  = data[p+6]  = this._fb;
+                    data[p+56] = data[p+60] = this._frl;
+                    data[p+57] = data[p+61] = this._fgl;
+                    data[p+58] = data[p+62] = this._fbl;
                 }
                 cp >>= 1;
             }
