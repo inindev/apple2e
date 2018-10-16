@@ -35,7 +35,7 @@ export class IOManager
 
     ////////////////////////////////////////////
     read(addr) {
-        if((addr & 0xf000) != 0xc000) return undefined;
+        if((addr & 0xf000) != 0xc000) return undefined; // default read
 
         // c000-c0ff: read switches
         if((addr & 0xff00) == 0xc000) {
@@ -77,10 +77,10 @@ export class IOManager
                     return this._mem.dms_hires ? 0x80 : 0;
 
                 case 0xc050: // text mode off
-                    console.log("text mode off (read)");
+                    //console.log("text mode off (read)");
                     this._text_mode = false;
                 case 0xc051: // text mode on
-                    console.log("text mode on (read)");
+                    //console.log("text mode on (read)");
                     this._text_mode = true;
 
                 case 0xc054: // page2 off
@@ -134,7 +134,7 @@ export class IOManager
                 // 0010 rom 0^1 = 1
                 // 0011 ram 1^1 = 0
                 this._mem.bsr_read = ((addr ^ (addr>>1)) & 0x01) == 0;
-                //console.log("bank select (read) ["+addr.toString(16)+"], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
+                //console.log("bank select (read) [" + addr.toString(16) + "], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
             }
 
             // slots begin at 0xc090
@@ -267,10 +267,10 @@ export class IOManager
                     return 0; // write handled
 
                 case 0xc050: // text mode off
-                    console.log("text mode off (write)");
+                    //console.log("text mode off (write)");
                     this._text_mode = false;
                 case 0xc051: // text mode on
-                    console.log("text mode on (write)");
+                    //console.log("text mode on (write)");
                     this._text_mode = true;
 
                 case 0xc054: // page2 off
@@ -324,7 +324,7 @@ export class IOManager
                 // 0010 rom 0^1 = 1
                 // 0011 ram 1^1 = 0
                 this._mem.bsr_read = ((addr ^ (addr>>1)) & 0x01) == 0;
-                //console.log("bank select (write) ["+addr.toString(16)+"], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
+                //console.log("bank select (write) [" + addr.toString(16) + "], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
                 return 0; // write handled
             }
 
@@ -333,5 +333,15 @@ export class IOManager
 
             return 0; // write handled
         }
+    }
+
+
+    reset() {
+        this._c3_rom = false;
+        this._c8_rom = false;
+        this._cx_rom = false;
+
+        this._text_mode = true;
+        this._bsr_write_count = 0;
     }
 }
