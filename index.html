@@ -15,12 +15,64 @@
         font-family: "Lucida Console", Monaco, monospace;
         background: #e1e1d0;
     }
+    @media only screen and (min-width: 916px) and (max-width: 1198px) {
+        canvas.screen {
+            min-width: 846px;
+            min-height: 585px;
+        }
+    }
+    @media only screen and (min-width: 1198px) and (max-width: 1480px) {
+        canvas.screen {
+            min-width: 1128px;
+            min-height: 780px;
+        }
+    }
+    @media only screen and (min-width: 1480px) and (max-width: 1762px) {
+        canvas.screen {
+            min-width: 1410px;
+            min-height: 975px;
+        }
+    }
+    @media only screen and (min-width: 1762px) and (max-width: 2044px) {
+        canvas.screen {
+            min-width: 1692px;
+            min-height: 1170px;
+        }
+    }
+    @media only screen and (min-width: 2044px) and (max-width: 2326px) {
+        canvas.screen {
+            min-width: 1974px;
+            min-height: 1365px;
+        }
+    }
+    @media only screen and (min-width: 2326px) and (max-width: 2608px) {
+        canvas.screen {
+            min-width: 2256px;
+            min-height: 1560px;
+        }
+    }
+    @media only screen and (min-width: 2608px) {
+        canvas.screen {
+            min-width: 2538px;
+            min-height: 1755px;
+        }
+    }
     canvas.screen {
-        min-width: 844px;
-        min-height: 582px;
         image-rendering: optimizeSpeed;
         image-rendering: -moz-crisp-edges;
         image-rendering: pixelated;
+    }
+    textarea {
+        resize: none;
+        border: none;
+        outline: none;
+        color: transparent;
+        background: transparent;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        position: absolute;
     }
     div.col1>div:nth-child(1) {
         margin: 20px;
@@ -31,6 +83,7 @@
         box-shadow:
           inset 0 0 0 2px #afaf83,
           inset 0 0 0 4px #5b4125;
+        position: relative;
     }
     div.col1>div:nth-child(2) {
         margin-left: 2em;
@@ -84,7 +137,10 @@
 <body>
   <div class="row">
     <div class="col1">
-      <div><canvas class="screen" width="564" height="390"></canvas></div>
+      <div>
+        <canvas class="screen" width="564" height="390"></canvas>
+        <textarea></textarea>
+      </div>
       <div>
         <div><button id="run_stop">run</button><button id="reset">reset</button><div class="drive_leds"><span>1</span><span>2</span></div></div>
         <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
