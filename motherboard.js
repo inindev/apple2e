@@ -15,6 +15,7 @@ import {IOManager} from "./io_manager.js";
 import {TextDisplay} from "./text_display.js";
 import {HiresDisplay} from "./hires_display.js";
 import {Keyboard} from "./keyboard.js";
+import {Floppy525} from "./floppy525.js";
 import {rom_342_0265_a} from "./rom/342-0265-a.js";
 import {rom_342_0304_cd} from "./rom/342-0304-cd.js";
 import {rom_342_0303_ef} from "./rom/342-0303-ef.js";
@@ -22,16 +23,16 @@ import {rom_342_0303_ef} from "./rom/342-0303-ef.js";
 
 export class Motherboard
 {
-    constructor(canvas) {
+    constructor(canvas, floppy_led_cb) {
         this.memory = new Memory(rom_342_0304_cd, rom_342_0303_ef);
         this.cpu = new W65C02S(this.memory);
         this.keyboard = new Keyboard();
         this.display_text = new TextDisplay(rom_342_0265_a, canvas);
         this.display_hires = new HiresDisplay(canvas);
+        this.floppy525 = new Floppy525(6, this.memory, floppy_led_cb);
         this.io_manager = new IOManager(this.memory, this.keyboard, this.display_text, this.display_hires);
 
         this.cycles = 0;
-        this.memory.write(0, 0xbe);
     }
 
     clock(count) {
@@ -54,6 +55,8 @@ export class Motherboard
         this.cpu.reset();
         this.display_text.reset();
         this.display_hires.reset();
+        this.floppy525.reset();
+        this.io_manager.reset();
         this.cycles = 0;
         this.cpu.register.pc = this.memory.read_word(0xfffc);
     }

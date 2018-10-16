@@ -74,7 +74,7 @@
         color: #734d26;
         background: #ccc;
     }
-    div.drive_leds>span.active {
+    div.drive_leds>span.on {
         color: #e1e1d0;
         background: radial-gradient(#d00, #900);
     }
@@ -146,7 +146,8 @@
 
     function init() {
         const canvas = document.querySelector("canvas.screen");
-        motherboard = new Motherboard(canvas);
+        const drive_leds = document.querySelectorAll("div.drive_leds>span");
+        motherboard = new Motherboard(canvas, (n,s)=>{drive_leds[n].className=s?"on":""});
         motherboard.reset();
 
         const ff = navigator.userAgent.toLowerCase().indexOf('firefox') > 0;
@@ -154,11 +155,10 @@
         document.addEventListener('keyup', motherboard.key_up.bind(motherboard));
 
         run_stop_btn = document.getElementById("run_stop");
-        run_stop_btn.addEventListener("click", ()=>{ (interval?stop:run)(); });
+        run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
         document.getElementById("reset").addEventListener("click", reset);
 
-        const msg = 'press "run" below to start vm';
-        motherboard.message(msg);
+        motherboard.message('press "run" below to start vm');
     }
 
     if(document.readyState === "loading") {
