@@ -16,53 +16,64 @@
         background: #e1e1d0;
     }
     @media only screen and (min-width: 916px) and (max-width: 1198px) {
-        canvas.screen {
+        div.display>canvas {
             min-width: 846px;
             min-height: 585px;
         }
     }
     @media only screen and (min-width: 1198px) and (max-width: 1480px) {
-        canvas.screen {
+        div.display>canvas {
             min-width: 1128px;
             min-height: 780px;
         }
     }
     @media only screen and (min-width: 1480px) and (max-width: 1762px) {
-        canvas.screen {
+        div.display>canvas {
             min-width: 1410px;
             min-height: 975px;
         }
     }
     @media only screen and (min-width: 1762px) and (max-width: 2044px) {
-        canvas.screen {
+        div.display>canvas {
             min-width: 1692px;
             min-height: 1170px;
         }
     }
     @media only screen and (min-width: 2044px) and (max-width: 2326px) {
-        canvas.screen {
+        div.display>canvas {
             min-width: 1974px;
             min-height: 1365px;
         }
     }
     @media only screen and (min-width: 2326px) and (max-width: 2608px) {
-        canvas.screen {
+        div.display>canvas {
             min-width: 2256px;
             min-height: 1560px;
         }
     }
     @media only screen and (min-width: 2608px) {
-        canvas.screen {
+        div.display>canvas {
             min-width: 2538px;
             min-height: 1755px;
         }
     }
-    canvas.screen {
+    div.display {
+        margin: 20px;
+        padding: 12px;
+        display: inline-block;
+        background: #111;
+        border: 2px solid #5b4125;
+        box-shadow:
+          inset 0 0 0 2px #afaf83,
+          inset 0 0 0 4px #5b4125;
+        position: relative;
+    }
+    div.display>canvas {
         image-rendering: optimizeSpeed;
         image-rendering: -moz-crisp-edges;
         image-rendering: pixelated;
     }
-    textarea {
+    div.display>textarea {
         resize: none;
         border: none;
         outline: none;
@@ -74,21 +85,10 @@
         width: 100%;
         position: absolute;
     }
-    div.col1>div:nth-child(1) {
-        margin: 20px;
-        padding: 12px;
-        display: inline-block;
-        background: #111;
-        border: 2px solid #5b4125;
-        box-shadow:
-          inset 0 0 0 2px #afaf83,
-          inset 0 0 0 4px #5b4125;
-        position: relative;
-    }
-    div.col1>div:nth-child(2) {
+    div.buttons {
         margin-left: 2em;
     }
-    button {
+    div.buttons>div>button {
         margin: 4px;
         margin-top: 0;
         padding-bottom: 2px;
@@ -100,12 +100,12 @@
         color: #f5f5ef;
         background: #734d26;
     }
-    button:hover:active {
+    div.buttons>div>button:hover:active {
         color: #520;
         background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #377b7b), color-stop(1, #499));
         background:-moz-linear-gradient(center top, #377b7b 5%, #499 100%);
     }
-    button:hover {
+    div.buttons>div>button:hover {
         background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #86592d), color-stop(1, #734d26));
         background:-moz-linear-gradient(center top, #86592d 5%, #734d26 100%);
     }
@@ -137,11 +137,8 @@
 <body>
   <div class="row">
     <div class="col1">
-      <div>
-        <canvas class="screen" width="564" height="390"></canvas>
-        <textarea></textarea>
-      </div>
-      <div>
+      <div class="display"><canvas width="564" height="390"></canvas><textarea></textarea></div>
+      <div class="buttons">
         <div><button id="run_stop">run</button><button id="reset">reset</button><div class="drive_leds"><span>1</span><span>2</span></div></div>
         <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
         <div><span>see it on <a target="_blank" href="https://github.com/inindev/apple2e">github</a></span></div>
@@ -201,7 +198,7 @@
     }
 
     function init() {
-        const canvas = document.querySelector("canvas.screen");
+        const canvas = document.querySelector("div.display>canvas");
         const drive_leds = document.querySelectorAll("div.drive_leds>span");
         motherboard = new Motherboard(canvas, (n,s)=>{drive_leds[n].className=s?"on":""});
         motherboard.reset();
