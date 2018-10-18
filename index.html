@@ -188,10 +188,12 @@
     }
 
     function key_down(e) {
+        if(e.keyCode == 0) return;
         if(!e.metaKey) e.preventDefault();
-        if(e.keyCode > 0) motherboard.key_down(e.keyCode, e.shiftKey, e.ctrlKey, e.metaKey);
+        motherboard.key_down(e.keyCode, e.shiftKey, e.ctrlKey, e.metaKey);
     }
     function key_down_trans(e) {
+        if(e.keyCode == 0) return;
         if(!e.metaKey) e.preventDefault();
         const code = {0xba:0x3b, 0xbb:0x3d, 0xbd:0xad}[e.keyCode] || e.keyCode; // ; = -
         motherboard.key_down(code, e.shiftKey, e.ctrlKey, e.metaKey);
