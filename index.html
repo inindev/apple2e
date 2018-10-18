@@ -196,6 +196,14 @@
         const code = {0xba:0x3b, 0xbb:0x3d, 0xbd:0xad}[e.keyCode] || e.keyCode; // ; = -
         motherboard.key_down(code, e.shiftKey, e.ctrlKey, e.metaKey);
     }
+    function key_up(e) {
+        if(e.keyCode == 0) { // helpful for some mobile browsers
+            const code = e.target.value.charCodeAt();
+            motherboard.key_down(code, e.shiftKey, e.ctrlKey, e.metaKey);
+        }
+        e.target.value = "";
+        motherboard.key_up();
+    }
 
     function init() {
         const canvas = document.querySelector("div.display>canvas");
@@ -205,7 +213,7 @@
 
         const ff = navigator.userAgent.toLowerCase().indexOf('firefox') > 0;
         document.addEventListener('keydown', ff?key_down:key_down_trans);
-        document.addEventListener('keyup', motherboard.key_up.bind(motherboard));
+        document.addEventListener('keyup', key_up);
 
         run_stop_btn = document.getElementById("run_stop");
         run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
