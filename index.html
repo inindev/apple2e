@@ -189,7 +189,7 @@
 
     function key_down(e) {
         if(!e.metaKey) e.preventDefault();
-        motherboard.key_down(e.keyCode, e.shiftKey, e.ctrlKey, e.metaKey);
+        if(e.keyCode > 0) motherboard.key_down(e.keyCode, e.shiftKey, e.ctrlKey, e.metaKey);
     }
     function key_down_trans(e) {
         if(!e.metaKey) e.preventDefault();
