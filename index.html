@@ -199,7 +199,7 @@
     function key_up(e) {
         if(e.keyCode == 0) { // helpful for some mobile browsers
             const code = e.target.value.charCodeAt();
-            motherboard.key_down(code, e.shiftKey, e.ctrlKey, e.metaKey);
+            motherboard.key_down(code, false, false, false);
         }
         e.target.value = "";
         motherboard.key_up();
