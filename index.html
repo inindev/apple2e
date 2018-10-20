@@ -8,82 +8,57 @@
   <title>Apple IIe</title>
   <style type="text/css">
     body {
-        margin: 0px;
-        padding: 0px;
-        border: 0px;
-        font-size: 13px;
-        font-family: "Lucida Console", Monaco, monospace;
-        background: #e1e1d0;
+        margin:0px;
+        padding:0px;
+        font-size:13px;
+        font-family:"Lucida Console", Monaco, monospace;
+        background:#e1e1d0;
     }
-    @media only screen and (min-width: 916px) and (max-width: 1198px) {
-        div.display>canvas {
-            min-width: 846px;
-            min-height: 585px;
-        }
-    }
-    @media only screen and (min-width: 1198px) and (max-width: 1480px) {
-        div.display>canvas {
-            min-width: 1128px;
-            min-height: 780px;
-        }
-    }
-    @media only screen and (min-width: 1480px) and (max-width: 1762px) {
-        div.display>canvas {
-            min-width: 1410px;
-            min-height: 975px;
-        }
-    }
-    @media only screen and (min-width: 1762px) and (max-width: 2044px) {
-        div.display>canvas {
-            min-width: 1692px;
-            min-height: 1170px;
-        }
-    }
-    @media only screen and (min-width: 2044px) and (max-width: 2326px) {
-        div.display>canvas {
-            min-width: 1974px;
-            min-height: 1365px;
-        }
-    }
-    @media only screen and (min-width: 2326px) and (max-width: 2608px) {
-        div.display>canvas {
-            min-width: 2256px;
-            min-height: 1560px;
-        }
-    }
-    @media only screen and (min-width: 2608px) {
-        div.display>canvas {
-            min-width: 2538px;
-            min-height: 1755px;
-        }
+    div.row {
+        display:flex;
     }
     div.display {
-        margin: 20px;
-        padding: 12px;
-        display: inline-block;
-        background: #111;
+        flex-grow:0;
+        min-width:634px;
+        max-width:95%;
+    }
+    div.display>div {
+        display:inline-block;
+        margin:20px;
+        padding:12px;
         border: 2px solid #5b4125;
         box-shadow:
           inset 0 0 0 2px #afaf83,
           inset 0 0 0 4px #5b4125;
-        position: relative;
+        background:#111;
+        position:relative;
     }
-    div.display>canvas {
-        image-rendering: optimizeSpeed;
-        image-rendering: -moz-crisp-edges;
-        image-rendering: pixelated;
+    div.display>div>canvas {
+        image-rendering:optimizeSpeed;
+        image-rendering:-moz-crisp-edges;
+        image-rendering:pixelated;
     }
-    div.display>input {
-        resize: none;
-        border: none;
-        outline: none;
-        color: transparent;
-        background: transparent;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        position: absolute;
+    div.display>div>input {
+        resize:none;
+        border:none;
+        outline:none;
+        top:0;
+        left:0;
+        height:100%;
+        width:100%;
+        color:transparent;
+        background:transparent;
+        position:absolute;
+    }
+    div.side {
+        flex-grow:1;
+        display:flex;
+    }
+    div.sizer {
+        cursor:col-resize;
+        box-shadow:inset 0 0 0 2px #ccc;
+        width:6px;
+        background:#aaa;
     }
     div.buttons {
         margin-left: 2em;
@@ -131,24 +106,28 @@
         color: #e1e1d0;
         background: radial-gradient(#d00, #900);
     }
+    div.middle {
+        height:200px;
+    }
   </style>
 </head>
 
 <body>
-  <div class="row">
-    <div class="col1">
-      <div class="display"><canvas width="564" height="390"></canvas><input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password"></div>
-      <div class="buttons">
-        <div><button id="run_stop">run</button><button id="reset">reset</button><div class="drive_leds"><span>1</span><span>2</span></div></div>
-        <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
-        <div><span>see it on <a target="_blank" href="https://github.com/inindev/apple2e">github</a></span></div>
+  <div class="container">
+    <div class="row">
+      <div class="display">
+        <div><canvas height="390" width="564"></canvas><input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password"></div>
       </div>
+      <div class="side"><div class="sizer"></div></div>
     </div>
-    <div class="col2">
+    <div class="buttons">
+      <div><button id="run_stop">run</button><button id="reset">reset</button><div class="drive_leds"><span>1</span><span>2</span></div></div>
+      <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
+      <div><span>see it on <a target="_blank" href="https://github.com/inindev/apple2e">github</a></span></div>
     </div>
-    <div class="col3">
-    </div>
+    <div class="middle"></div>
   </div>
+
   <script type="module">
     import {Motherboard} from "./motherboard.js";
 
@@ -156,6 +135,7 @@
     let run_stop_btn;
     let interval;
     let last_ms;
+    let mouse_offs = 0;
 
     function stop() {
         run_stop_btn.innerText = "run";
@@ -208,7 +188,11 @@
     }
 
     function init() {
-        const canvas = document.querySelector("div.display>canvas");
+        window.addEventListener('resize', on_resize);
+        document.querySelector("div.sizer").addEventListener("mousedown", begin_resize, false);
+        console.log(document.querySelector("div.sizer"));
+
+        const canvas = document.querySelector("div.display>div>canvas");
         const drive_leds = document.querySelectorAll("div.drive_leds>span");
         motherboard = new Motherboard(canvas, (n,s)=>{drive_leds[n].className=s?"on":""});
         motherboard.reset();
@@ -222,6 +206,30 @@
         document.getElementById("reset").addEventListener("click", reset);
 
         motherboard.message('press "run" below to start vm');
+    }
+
+    function on_resize(e) {
+        const display = document.querySelector("div.display");
+        const canvas = document.querySelector("div.display>div>canvas");
+        if(e.clientX) {
+            const new_size = Math.max(634, e.clientX - mouse_offs);
+            display.style.width = new_size+"px";
+        }
+        const delta = display.offsetWidth - canvas.offsetWidth;
+        if((delta < 70) || (delta > 351)) {
+            const r = ((display.offsetWidth - 70) / 282) & 0x3fff;
+            canvas.style.width = (r * 282)+"px";
+            canvas.style.height = (r * 195)+"px";
+        }
+    }
+    function begin_resize(e) {
+        mouse_offs = e.clientX - document.querySelector("div.display").offsetWidth;
+        window.addEventListener("mousemove", on_resize, false);
+        window.addEventListener("mouseup", end_resize, false);
+    }
+    function end_resize(e) {
+        window.removeEventListener("mousemove", on_resize, false);
+        window.removeEventListener("mouseup", end_resize, false);
     }
 
     if(document.readyState === "loading") {
