@@ -12,10 +12,23 @@
 //  13 sector roms (p5 boot code, p6 state machine)
 //     ftp://ftp.apple.asimov.net/pub/apple_II/emulators/rom_images/Apple%20Disk%20II%2013%20Sector%20Interface%20Card%20ROM%20P5%20-%20341-0009.bin
 //     ftp://ftp.apple.asimov.net/pub/apple_II/emulators/rom_images/Apple%20Disk%20II%2013%20Sector%20Interface%20Card%20ROM%20P6%20-%20341-0010.bin
+//
 //  16 sector roms (p5 boot code, p6 state machine)
 //     ftp://ftp.apple.asimov.net/pub/apple_II/emulators/rom_images/Apple%20Disk%20II%2016%20Sector%20Interface%20Card%20ROM%20P5%20-%20341-0027.bin
 //     ftp://ftp.apple.asimov.net/pub/apple_II/emulators/rom_images/Apple%20Disk%20II%2016%20Sector%20Interface%20Card%20ROM%20P6%20-%20341-0028.bin
 //
+//
+//  5 and 3 encoding
+//    35 tracks
+//    13 sectors per track
+//    https://en.wikipedia.org/wiki/Group_coded_recording#5_and_3
+//
+//  6 and 2 encoding
+//    35 tracks
+//    16 sectors per track
+//    https://en.wikipedia.org/wiki/Group_coded_recording#6_and_2
+//
+
 
 import {disk16_p5_rom_341_0027} from "./rom/disk16-p5_341-0027.js";
 import {disk16_p6_rom_341_0028} from "./rom/disk16-p6_341-0028.js";
@@ -39,6 +52,9 @@ export class Floppy525
 
         this._write_disk = false;
         this._data_latch = 0;
+
+        this._track = 0;
+        this._phase_last = 0;
     }
 
 
@@ -103,15 +119,19 @@ export class Floppy525
                 }
                 break;
             case 0x0e: // latch is input (q7l)
-                this._write_disk = false;
-                break;
             case 0x0f: // latch is output (q7h)
-                this._write_disk = true;
+                this._write_disk = (op & 0x01) != 0;
                 break;
             default: // 0-7
                 // ascending: inward / descending: outward
-                const phase_on = op & 0x01;
-                const phase_num = (op >> 1) & 0x03;
+                if(op & 0x01) { // phase on
+                    const phase = op & 0x06;
+                    const delta = phase - this._phase_last;
+                    this._phase_last = phase;
+                    this._track += (delta < -4) ? 2 : ((delta > 4) ? -2 : delta);
+                    if(this._track < 0) this._track = 0;
+                    else if(this._track > 34) this._track = 34;
+                }
                 break;
         }
 
@@ -125,6 +145,9 @@ export class Floppy525
 
         this._write_disk = false;
         this._data_latch = 0;
+
+        this._track = 0;
+        this._phase_last = 0;
 
         this._led_cb(0, false);
         this._led_cb(1, false);
