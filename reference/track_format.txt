@@ -1,0 +1,113 @@
+reference
+~~~~~~~~~
+beneath apple dos: ftp://ftp.apple.asimov.net/pub/apple_II/documentation/os/dos/Beneath%20Apple%20DOS%20-%204th%20Ed.pdf
+
+
+track format
+~~~~~~~~~~~~
+
+p. 3-10
+gap 1: 40-95 bytes
+gap 2: 5-10 bytes
+gap 3: 14-24 bytes
+
+p. 3-12
+address field (4-4 encoded): 14 bytes
+  0-2 prologue     (d5 aa 96)
+  3-4 disk volume     (xx yy)
+  5-6 track number    (xx yy)
+  7-8 sector number   (xx yy)
+  9-a checksum        (xx yy)
+  b-d epilogue     (de aa eb)
+
+data field (6-2 encoded): 349 bytes
+  000-002 prologue  (d5 aa ad)
+  003-158 user data (342 encoded bytes)
+      159 checksum        (xx)
+  15a-15c epilogue  (de aa eb)
+
+
+order - figure 3.7 (p. 3-7)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+gap 1
+address field #0
+gap 2
+data field #0
+
+gap 3
+address field #1
+gap 2
+data field #1
+
+gap 3
+address field #2
+gap 2
+data field #2
+
+
+address field 4-4 encoding
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+d7-d6-d5-d4-d3-d2-d1-d0
+xx (odd bits):  1-d7-1-d5-1-d3-1-d1
+yy (even bits): 1-d6-1-d4-1-d2-1-d0
+
+xx = (val >> 1) | 0xaa;
+yy = val | 0xaa;
+const enc44 = (val) => { return[(val >> 1) | 0xaa, val | 0xaa]; };
+
+
+data field 6-2 encoding
+~~~~~~~~~~~~~~~~~~~~~~~
+see figure 3.20 on p. 3-18
+
+000-155: 342 byte addresses
+000->0ff bits 7-2
+
+00^55 -> checksum0
+55^54 -> checksum1
+54^53 -> checksum2
+...
+01^00 -> checksum85
+
+000^100 -> checksum86
+100^101 -> checksum87
+101^102 -> checksum88
+...
+1fe^1ff -> checksum341
+
+
+6-2 lookup table
+~~~~~~~~~~~~~~~~
+hexdump -s 0x8596 -n 64 ProDOS_2_4_2.dsk
+0008596 96 97 9a 9b 9d 9e 9f a6 a7 ab ac ad ae af b2 b3
+00085a6 b4 b5 b6 b7 b9 ba bb bc bd be bf cb cd ce cf d3
+00085b6 d6 d7 d9 da db dc dd de df e5 e6 e7 e9 ea eb ec
+00085c6 ed ee ef f2 f3 f4 f5 f6 f7 f9 fa fb fc fd fe ff
+
+// ProDOS_2_4_2.dsk 8596-85d6
+const write_62 = [
+    0x96,0x97,0x9a,0x9b,0x9d,0x9e,0x9f,0xa6,0xa7,0xab,0xac,0xad,0xae,0xaf,0xb2,0xb3,
+    0xb4,0xb5,0xb6,0xb7,0xb9,0xba,0xbb,0xbc,0xbd,0xbe,0xbf,0xcb,0xcd,0xce,0xcf,0xd3,
+    0xd6,0xd7,0xd9,0xda,0xdb,0xdc,0xdd,0xde,0xdf,0xe5,0xe6,0xe7,0xe9,0xea,0xeb,0xec,
+    0xed,0xee,0xef,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff
+];
+
+
+prodos sector interleave
+~~~~~~~~~~~~~~~~~~~~~~~~
+hexdump -s 0x8d2b -n 16 ProDOS_2_4_2.dsk
+0008d2b 00 0d 0b 09 07 05 03 01 0e 0c 0a 08 06 04 02 0f
+
+// ProDOS_2_4_2.dsk 8d2b-8d3b
+const sec_int = [0x00,0x0d,0x0b,0x09,0x07,0x05,0x03,0x01,0x0e,0x0c,0x0a,0x08,0x06,0x04,0x02,0x0f];
+
+
+dos 3.3 sector interleave
+~~~~~~~~~~~~~~~~~~~~~~~~~
+hexdump -s 0x9b8 -n 16 Apple_DOS_3.3_Master.dsk
+00009b8 00 0d 0b 09 07 05 03 01 0e 0c 0a 08 06 04 02 0f
+
+// Apple_DOS_3.3_Master.dsk 9b8-9c8
+const sec_int = [0x00,0x0d,0x0b,0x09,0x07,0x05,0x03,0x01,0x0e,0x0c,0x0a,0x08,0x06,0x04,0x02,0x0f];
+
