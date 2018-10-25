@@ -10,11 +10,13 @@
     body {
         margin:0px;
         padding:0px;
+        user-select:none;
+        -moz-user-select:none;
         font-size:13px;
         font-family:"Lucida Console", Monaco, monospace;
         background:#e1e1d0;
     }
-    div.row {
+    div.top {
         display:flex;
     }
     div.display {
@@ -26,7 +28,7 @@
         display:inline-block;
         margin:20px;
         padding:12px;
-        border: 2px solid #5b4125;
+        border:2px solid #5b4125;
         box-shadow:
           inset 0 0 0 2px #afaf83,
           inset 0 0 0 4px #5b4125;
@@ -51,7 +53,7 @@
         position:absolute;
     }
     div.side {
-        flex-grow:1;
+        xflex-grow:1;
         display:flex;
     }
     div.sizer {
@@ -60,72 +62,94 @@
         width:6px;
         background:#aaa;
     }
+    div.middle {
+        margin-left:30px;
+    }
     div.buttons {
-        margin-left: 2em;
+        padding:0 12px 0 12px;
     }
-    div.buttons>div>button {
-        margin: 4px;
-        margin-top: 0;
-        padding-bottom: 2px;
-        border: 1px solid #c5c5c5;
-        border-radius: 4px;
-        width: 6em;
-        height: 2.5em;
-        font-size: 13px;
-        color: #f5f5ef;
-        background: #734d26;
+    div.buttons>button {
+        margin:4px;
+        margin-top:0;
+        padding-bottom:2px;
+        border:1px solid #c5c5c5;
+        border-radius:4px;
+        width:6em;
+        height:2.5em;
+        font-size:13px;
+        color:#f5f5ef;
+        background:#734d26;
     }
-    div.buttons>div>button:hover:active {
-        color: #520;
+    div.buttons>button:hover:active {
+        color:#520;
         background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #377b7b), color-stop(1, #499));
         background:-moz-linear-gradient(center top, #377b7b 5%, #499 100%);
     }
-    div.buttons>div>button:hover {
+    div.buttons>button:hover {
         background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #86592d), color-stop(1, #734d26));
         background:-moz-linear-gradient(center top, #86592d 5%, #734d26 100%);
     }
-    div.drive_leds {
-        margin-left: 4em;
-        padding: 6px;
-        border: 1px solid #734d26;
-        white-space: nowrap;
-        display: inline-block;
-        vertical-align: middle;
+    div.drives {
+        margin:0 0 0 200px;
+        min-width:32.5em;
+        display:inline-block;
     }
-    div.drive_leds>span {
-        margin: 6px;
-        padding: 7px;
-        padding-top: 4px;
-        padding-bottom: 4px;
-        border-radius: 10px;
-        font-size: 9px;
-        color: #734d26;
-        background: #ccc;
+    div.drive {
+        margin:10px;
+        padding:10px;
+        border:1px solid #734d26;
     }
-    div.drive_leds>span.on {
-        color: #e1e1d0;
-        background: radial-gradient(#d00, #900);
+    div.drive>input {
+        height:2em;
+        font-size:12px;
+        font-family:"Lucida Console", Monaco, monospace;
     }
-    div.middle {
-        height:200px;
+    div.drive>span {
+        margin:0 20px 0 20px;
+    }
+    span.led {
+        margin:6px;
+        padding:4px 7px 4px 7px;
+        border-radius:10px;
+        font-size:9px;
+        color:#734d26;
+        background:#ccc;
+    }
+    span.led.on {
+        color:#e1e1d0;
+        background:radial-gradient(#d00, #900);
+    }
+    div.bottom {
+        position:absolute;
+        bottom:0;
+        padding:40px;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <div class="row">
+    <div class="top">
       <div class="display">
         <div><canvas height="390" width="564"></canvas><input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password"></div>
       </div>
-      <div class="side"><div class="sizer"></div></div>
+      <div class="side">
+        <div class="sizer"></div>
+      </div>
     </div>
-    <div class="buttons">
-      <div><button id="run_stop">run</button><button id="reset">reset</button><div class="drive_leds"><span>1</span><span>2</span></div></div>
-      <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div>
+    <div class="middle">
+      <div class="buttons">
+        <button id="run_stop">run</button>
+        <button id="reset">reset</button>
+      </div>
+      <div class="drives">
+        <div class="drive"><span>Drive 1</span><input type="file"><span class="led">&nbsp;</span></div>
+        <div class="drive"><span>Drive 2</span><input type="file"><span class="led">&nbsp;</span></div>
+      </div>
+    </div>
+    <div class="bottom">
       <div><span>see it on <a target="_blank" href="https://github.com/inindev/apple2e">github</a></span></div>
     </div>
-    <div class="middle"></div>
   </div>
 
   <script type="module">
@@ -152,8 +176,10 @@
         interval = window.requestAnimationFrame(on_interval);
     }
 
+    // Understanding the Apple II, p.3-3
+    // composite freq: 1020.5kHz
     function on_interval(now_ms) {
-        const cycles = ((now_ms - last_ms) * 1023) & 0x7fff; // 1023 cyc/ms
+        const cycles = ((now_ms - last_ms) * 1024) & 0x7fff;
         last_ms = now_ms;
         motherboard.clock(cycles);
         interval = window.requestAnimationFrame(on_interval);
@@ -165,6 +191,20 @@
         const cold = event && (event.shiftKey || event.altKey || event.metaKey);
         motherboard.reset(cold);
         if(!was_stopped) run();
+    }
+
+    function file_select(e, num) {
+        const file = e.target.files[0];
+        if(file.size != 143360) {
+            e.target.value = "";
+            alert("file must be a 140k .dsk file");
+            return;
+        }
+        const fr = new FileReader();
+        fr.onload = () => {
+            motherboard.floppy525.load_disk(num, file.name, fr.result);
+        };
+        fr.readAsBinaryString(file);
     }
 
     function key_down(e) {
@@ -192,9 +232,15 @@
         document.querySelector("div.sizer").addEventListener("mousedown", begin_resize, false);
 
         const canvas = document.querySelector("div.display>div>canvas");
-        const drive_leds = document.querySelectorAll("div.drive_leds>span");
-        motherboard = new Motherboard(canvas, (n,s)=>{drive_leds[n].className=s?"on":""});
+        const drive_leds = document.querySelectorAll("span.led");
+        motherboard = new Motherboard(canvas, (n,s)=>{drive_leds[n].className=s?"led on":"led"});
         motherboard.reset();
+
+        const drives = document.querySelectorAll("div.drive>input");
+        drives[0].addEventListener('change', (e)=>{file_select(e, 0)});
+        if(drives[0].value) drives[0].dispatchEvent(new Event('change'));
+        drives[1].addEventListener('change', (e)=>{file_select(e, 1)});
+        if(drives[1].value) drives[1].dispatchEvent(new Event('change'));
 
         const ff = navigator.userAgent.toLowerCase().indexOf('firefox') > 0;
         document.addEventListener('keydown', ff?key_down:key_down_trans);
