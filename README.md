@@ -7,6 +7,24 @@ Virtual Apple IIe <a target="_blank" href="https://inindev.github.io/apple2e/ind
 
 &nbsp;
 
+TODO List:
+
+- sound
+
+video
+ - text & graphics modes
+ - lores graphics
+ - double hires graphics
+
+disk io
+ - disk writing
+ - support .po disk format
+ - support .2mg, .2img
+ - support .img
+
+peripherals
+ - various expansion cards
+
 &nbsp;
 
 &nbsp;
