@@ -236,9 +236,9 @@ export class Memory
 
     reset() {
         this._main.fill(0);
-        this._main_b2.fill(0);
+        this._main_bb.fill(0);
         this._aux.fill(0);
-        this._aux_b2.fill(0);
+        this._aux_bb.fill(0);
 
         this._bsr_read = false;
         this._bsr_write = false;
