@@ -26,6 +26,11 @@ export class IOManager
         this._cx_rom = false;
 
         this._text_mode = true;
+        this._mixed_mode = false;
+        this._altchar_mode = false;
+        this._80col_mode = false;
+        this._double_hires = false;
+
         this._bsr_write_count = 0;
 
         this._mem.add_read_hook(this.read.bind(this));
@@ -44,6 +49,9 @@ export class IOManager
             {
                 case 0xc000: // keyboard io
                     return this._kbd.key;
+                case 0xc010: // keyboard strobe
+                    this._kbd.strobe();
+                    return 0;
                 case 0xc011: // bank (0: bank1, 0x80: bank2)
                     //console.log("active bank: " + this._mem.bsr_bank2 ? "2" : "1");
                     return this._mem.bsr_bank2 ? 0x80 : 0;
@@ -67,82 +75,29 @@ export class IOManager
                 case 0xc018: // 80store (0: 80store off, 0x80: 80store on)
                     //console.log("80 store: " + this._mem.dms_80store);
                     return this._mem.dms_80store ? 0x80 : 0;
-
                 case 0xc01a: // text (0: graphics mode, 0x80: text mode)
                     return this._text_mode ? 0x80 : 0;
-
+                case 0xc01b: // mixed mode (0: full screen, 0x80: mixed mode)
+                    return this._mixed_mode ? 0x80 : 0;
                 case 0xc01c: // page2 (0: main, 0x80: aux)
                     return this._mem.dms_page2 ? 0x80 : 0;
-                case 0xc01d: // hires (0: main, 0x80: aux)
+                case 0xc01d: // hires (0: lores, 0x80: hires)
                     return this._mem.dms_hires ? 0x80 : 0;
-
-                case 0xc050: // text mode off
-                    //console.log("text mode off (read)");
-                    this._text_mode = false;
-                    return 0;
-                case 0xc051: // text mode on
-                    //console.log("text mode on (read)");
-                    this._text_mode = true;
-                    return 0;
-
-                case 0xc054: // page2 off
-                    //console.log("page2 off (read)");
-                    if(this._mem.dms_page2) {
-                        this._mem.dms_page2 = false;
-//                        if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
-                    }
-                    return 0;
-                case 0xc055: // page2 on
-                    //console.log("page2 on (read)");
-                    if(!this._mem.dms_page2) {
-                        this._mem.dms_page2 = true;
-//                        if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
-                    }
-                    return 0;
-                case 0xc056: // hires off
-                    //console.log("hires off (read)");
-                    if(this._mem.dms_hires) {
-                        this._mem.dms_hires = false;
-//                        if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
-                    }
-                    return 0;
-                case 0xc057: // hires on
-                    //console.log("hires on (read)");
-                    if(!this._mem.dms_hires) {
-                        this._mem.dms_hires = true;
-//                        if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
-                    }
-                    return 0;
+                case 0xc01e: // alt char mode (0: alt char mode off, 0x80: alt char mode on)
+                    return this._altchar_mode ? 0x80 : 0;
+                case 0xc01f: // 80 col mode (0: 40 cols, 0x80: 80 cols)
+                    return this._80col_mode ? 0x80 : 0;
+                case 0xc07f: // double hires (0: double hires inactive, 0x80: double hires active)
+                    //console.log("double hires: " + this._double_hires);
+                    return this._double_hires ? 0 : 0x80;
                 default:
                     break;
-            }
-
-            // bank select switches
-            // apple tech ref p.82
-            if((addr >= 0xc080) && (addr <= 0xc08f)) {
-                // bit 0: ram read/write, (0: read only, 1: write)
-                if((addr & 0x01) != 0) {
-                    this._bsr_write_count++;
-                } else {
-                    this._bsr_write_count = 0;
-                }
-                this._mem.bsr_write = (this._bsr_write_count > 1); // requires two reads to activate write mode
-
-                // bit 3: d000 bank select, (0: bank 2, 8: bank 1)
-                this._mem.bsr_bank2 = (addr & 0x08) == 0;
-
-                // 0000 ram 0^0 = 0
-                // 0001 rom 1^0 = 1
-                // 0010 rom 0^1 = 1
-                // 0011 ram 1^1 = 0
-                this._mem.bsr_read = ((addr ^ (addr>>1)) & 0x01) == 0;
-                //console.log("bank select (read) [" + addr.toString(16) + "], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
             }
 
             // slots begin at 0xc090
             if(addr > 0xc08f) return undefined;
 
-            return 0; // all other c0xx flags report 0
+            return this.rw_switches(addr);
         }
 
         // c100-cfff: rom handling
@@ -214,6 +169,13 @@ export class IOManager
         // c000-c0ff: write switches
         if((addr & 0xff00) == 0xc000) {
             //console.log("c0xx write switch: [" + addr.toString(16) + "] --> val: " + val);
+
+            // keyboard strobe (write: 0xc010-0xc01f)
+            if((addr & 0xfff0) == 0xc010) {
+                this._kbd.strobe();
+                return 0; // write handled
+            }
+
             switch(addr)
             {
                 case 0xc000: // 80store off
@@ -264,79 +226,125 @@ export class IOManager
                     //console.log("c3 rom off (slot 3 io on)");
                     this._c3_rom = false;
                     return 0; // write handled
-                case 0xc010: // keyboard strobe
-                    this._kbd.key = 0x7f;
+                case 0xc00c: // 80 col off
+                    //console.log("80 col off");
+                    this._80col_mode = false;
                     return 0; // write handled
-
-                case 0xc050: // text mode off
-                    //console.log("text mode off (write)");
-                    this._text_mode = false;
-                    return 0;
-                case 0xc051: // text mode on
-                    //console.log("text mode on (write)");
-                    this._text_mode = true;
-                    return 0;
-
-                case 0xc054: // page2 off
-                    //console.log("page2 off (write)");
-                    if(this._mem.dms_page2) {
-                        this._mem.dms_page2 = false;
-//                        if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
-                    }
+                case 0xc00d: // 80 col on
+                    //console.log("80 col on");
+                    this._80col_mode = true;
                     return 0; // write handled
-                case 0xc055: // page2 on
-                    //console.log("page2 on (write)");
-                    if(!this._mem.dms_page2) {
-                        this._mem.dms_page2 = true;
-//                        if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
-                    }
+                case 0xc00e: // alt char off
+                    //console.log("alt char off");
+                    this._altchar_mode = false;
                     return 0; // write handled
-                case 0xc056: // hires off
-                    //console.log("hires off (write)");
-                    if(this._mem.dms_hires) {
-                        this._mem.dms_hires = false;
-//                        if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
-                    }
+                case 0xc00f: // alt char on
+                    //console.log("alt char on");
+                    this._altchar_mode = true;
                     return 0; // write handled
-                case 0xc057: // hires on
-                    //console.log("hires on (write)");
-                    if(!this._mem.dms_hires) {
-                        this._mem.dms_hires = true;
-//                        if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
-                    }
-                    return 0; // write handled
+                //case 0xc010: // keyboard strobe
+                //    this._kbd.strobe();
+                //    return 0; // write handled
                 default:
                     break;
-            }
-
-            // bank select switches
-            // apple tech ref p.82
-            if((addr >= 0xc080) && (addr <= 0xc08f)) {
-                // bit 0: ram read/write, (0: read only, 1: write)
-                if((addr & 0x01) != 0) {
-                    this._bsr_write_count++;
-                } else {
-                    this._bsr_write_count = 0;
-                }
-                this._mem.bsr_write = (this._bsr_write_count > 1); // requires two reads to activate write mode
-
-                // bit 3: d000 bank select, (0: bank 2, 8: bank 1)
-                this._mem.bsr_bank2 = (addr & 0x08) == 0;
-
-                // 0000 ram 0^0 = 0
-                // 0001 rom 1^0 = 1
-                // 0010 rom 0^1 = 1
-                // 0011 ram 1^1 = 0
-                this._mem.bsr_read = ((addr ^ (addr>>1)) & 0x01) == 0;
-                //console.log("bank select (write) [" + addr.toString(16) + "], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
-                return 0; // write handled
             }
 
             // slots begin at 0xc090
             if(addr > 0xc08f) return undefined;
 
-            return 0; // write handled
+            return this.rw_switches(addr);
         }
+    }
+
+
+    rw_switches(addr) {
+        switch(addr)
+        {
+            case 0xc030: // speaker toggle
+                console.log("speaker toggle");
+                break;
+            case 0xc050: // text mode off
+                //console.log("text mode off");
+                this._text_mode = false;
+                break;
+            case 0xc051: // text mode on
+                //console.log("text mode on");
+                this._text_mode = true;
+                break;
+            case 0xc052: // full screen
+                //console.log("mixed mode off");
+                this._mixed_mode = false;
+                break;
+            case 0xc053: // mixed mode
+                //console.log("mixed mode on");
+                this._mixed_mode = true;
+                break;
+            case 0xc054: // page2 off
+                //console.log("page2 off");
+                if(this._mem.dms_page2) {
+                    this._mem.dms_page2 = false;
+//                    if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
+                }
+                break;
+            case 0xc055: // page2 on
+                //console.log("page2 on");
+                if(!this._mem.dms_page2) {
+                    this._mem.dms_page2 = true;
+//                    if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
+                }
+                break;
+            case 0xc056: // hires off
+                //console.log("hires off");
+                if(this._mem.dms_hires) {
+                    this._mem.dms_hires = false;
+//                    if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
+                }
+                break;
+            case 0xc057: // hires on
+                //console.log("hires on");
+                if(!this._mem.dms_hires) {
+                    this._mem.dms_hires = true;
+//                    if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
+                }
+                break;
+            case 0xc05e: // double hires on
+                if(this._80col_mode) {
+                    console.log("double hires on");
+                    this._double_hires = true;
+                }
+                break;
+            case 0xc05f: // double hires off
+                if(this._80col_mode) {
+                    console.log("double hires off");
+                    this._double_hires = false;
+                }
+                break;
+            default: // bsr: c080-c08f
+                // bank select switches
+                // apple tech ref p.82
+                if((addr >= 0xc080) && (addr <= 0xc08f)) {
+                    // bit 0: ram read/write, (0: read only, 1: write)
+                    if((addr & 0x01) != 0) {
+                        this._bsr_write_count++;
+                    } else {
+                        this._bsr_write_count = 0;
+                    }
+                    this._mem.bsr_write = (this._bsr_write_count > 1); // requires two reads to activate write mode
+
+                    // bit 3: d000 bank select, (0: bank 2, 8: bank 1)
+                    this._mem.bsr_bank2 = (addr & 0x08) == 0;
+
+                    // 0000 ram 0^0 = 0
+                    // 0001 rom 1^0 = 1
+                    // 0010 rom 0^1 = 1
+                    // 0011 ram 1^1 = 0
+                    this._mem.bsr_read = ((addr ^ (addr>>1)) & 0x01) == 0;
+                    //console.log("bank select [" + addr.toString(16) + "], dx read: " + this._mem.bsr_read + "  dx write: " + this._mem.bsr_write + "  dx bank2: " + this._mem.bsr_bank2);
+                }
+                break;
+        }
+
+        return 0; // switch processed
     }
 
 
@@ -349,3 +357,4 @@ export class IOManager
         this._bsr_write_count = 0;
     }
 }
+
