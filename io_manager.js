@@ -79,9 +79,11 @@ export class IOManager
                 case 0xc050: // text mode off
                     //console.log("text mode off (read)");
                     this._text_mode = false;
+                    return 0;
                 case 0xc051: // text mode on
                     //console.log("text mode on (read)");
                     this._text_mode = true;
+                    return 0;
 
                 case 0xc054: // page2 off
                     //console.log("page2 off (read)");
@@ -269,9 +271,11 @@ export class IOManager
                 case 0xc050: // text mode off
                     //console.log("text mode off (write)");
                     this._text_mode = false;
+                    return 0;
                 case 0xc051: // text mode on
                     //console.log("text mode on (write)");
                     this._text_mode = true;
+                    return 0;
 
                 case 0xc054: // page2 off
                     //console.log("page2 off (write)");
