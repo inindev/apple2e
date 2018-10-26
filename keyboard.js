@@ -65,6 +65,10 @@ export class Keyboard
     get key_pressed() { return this._key_pressed; };
     set key_pressed(val) { this._key_pressed = (val != 0); }
 
+    strobe() {
+        this._key = 0x7f;
+    }
+
     key_down(code, shift, ctrl, meta) {
         this._key_pressed = true;
 
