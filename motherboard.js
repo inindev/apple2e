@@ -24,7 +24,7 @@ import {rom_342_0303_ef} from "./rom/342-0303-ef.js";
 
 export class Motherboard
 {
-    constructor(canvas, floppy_led_cb) {
+    constructor(khz, canvas, floppy_led_cb) {
         this.memory = new Memory(rom_342_0304_cd, rom_342_0303_ef);
         this.cpu = new W65C02S(this.memory);
         this.keyboard = new Keyboard();
@@ -32,8 +32,7 @@ export class Motherboard
         this.display_hires = new HiresDisplay(canvas);
         this.floppy525 = new Floppy525(6, this.memory, floppy_led_cb);
         this.io_manager = new IOManager(this.memory, this.keyboard, this.display_text, this.display_hires);
-        this.audio = new AppleAudio();
-        this.audio.init();
+        this.audio = new AppleAudio(khz);
 
         this.memory.add_read_hook(this.sound_hook.bind(this));
         this.memory.add_write_hook(this.sound_hook.bind(this));
@@ -44,6 +43,7 @@ export class Motherboard
     sound_hook(addr, val) {
         if(addr != 0xc030) return undefined;
         this.audio.click(this.cycles);
+        return 0;
     }
 
     clock(count) {

@@ -8,12 +8,13 @@
   <title>Apple IIe</title>
   <style type="text/css">
     body {
-        margin:0px;
-        padding:0px;
+        margin:0;
+        padding:0;
         user-select:none;
+        -webkit-user-select:none;
         -moz-user-select:none;
         font-size:13px;
-        font-family:"Lucida Console", Monaco, monospace;
+        font-family:sans-serif;
         background:#e1e1d0;
     }
     div.top {
@@ -43,7 +44,6 @@
     div.display>div>input {
         resize:none;
         border:none;
-        outline:none;
         top:0;
         left:0;
         height:100%;
@@ -53,7 +53,6 @@
         position:absolute;
     }
     div.side {
-        xflex-grow:1;
         display:flex;
     }
     div.sizer {
@@ -89,6 +88,9 @@
         background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #86592d), color-stop(1, #734d26));
         background:-moz-linear-gradient(center top, #86592d 5%, #734d26 100%);
     }
+    div.buttons>input {
+        margin-left:200px;
+    }
     div.drives {
         margin:0 0 0 200px;
         min-width:32.5em;
@@ -102,7 +104,7 @@
     div.drive>input {
         height:2em;
         font-size:12px;
-        font-family:"Lucida Console", Monaco, monospace;
+        font-family:sans-serif;
     }
     div.drive>span {
         margin:0 20px 0 20px;
@@ -146,6 +148,7 @@
       <div class="buttons">
         <button id="run_stop">run</button>
         <button id="reset">reset</button>
+        <input type="range" min="0" max="1" value="0.8" step="0.1">
       </div>
       <div class="drives">
         <div class="drive"><span>Drive 1</span><input type="file"><span class="led">&nbsp;</span></div>
@@ -169,6 +172,9 @@
   <script type="module">
     import {Motherboard} from "./motherboard.js";
 
+    // Understanding the Apple II, p.3-3
+    // composite freq: 1020.5kHz
+    const khz = 1020.5;
     let motherboard;
     let run_stop_btn;
     let interval;
@@ -186,14 +192,13 @@
     function run() {
         run_stop_btn.innerText = "stop";
         if(interval) return;
+        motherboard.audio.init();
         last_ms = performance.now();
         interval = window.requestAnimationFrame(on_interval);
     }
 
-    // Understanding the Apple II, p.3-3
-    // composite freq: 1020.5kHz
     function on_interval(now_ms) {
-        const cycles = ((now_ms - last_ms) * 1024) & 0x7fff;
+        const cycles = ((now_ms - last_ms) * khz) & 0x7fff;
         last_ms = now_ms;
         motherboard.clock(cycles);
         interval = window.requestAnimationFrame(on_interval);
@@ -247,7 +252,7 @@
 
         const canvas = document.querySelector("div.display>div>canvas");
         const drive_leds = document.querySelectorAll("span.led");
-        motherboard = new Motherboard(canvas, (n,s)=>{drive_leds[n].className=s?"led on":"led"});
+        motherboard = new Motherboard(khz, canvas, (n,s)=>{drive_leds[n].className=s?"led on":"led"});
         motherboard.reset();
 
         const drives = document.querySelectorAll("div.drive>input");
@@ -263,6 +268,7 @@
         run_stop_btn = document.getElementById("run_stop");
         run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
         document.getElementById("reset").addEventListener("click", reset);
+        document.querySelector("div.buttons>input").addEventListener("change", (e)=>{motherboard.audio.level=e.target.value});
 
         motherboard.message('press "run" below to start vm');
     }

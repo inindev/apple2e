@@ -10,17 +10,18 @@
 
 export class AppleAudio
 {
-    constructor() {
+    constructor(khz) {
         this.ac;
         this.gn;
-        this.cpu_hz = 1024000;
+        this.cpu_hz = khz * 1000;
         this.seg_time = 0;
         this.seg_clock = 0;
         this.state = false;
-        this.level = 1;
+        this.level = 0.8;
     }
 
     init() {
+        if(this.ac) return;
         this.ac = new AudioContext();
         const osc = new OscillatorNode(this.ac, {channelCount:1, channelCountMode:"explicit", frequency:0});
         const ws = new WaveShaperNode(this.ac, {channelCount:1, channelCountMode:"explicit"});
@@ -34,11 +35,13 @@ export class AppleAudio
     }
 
     begin_segment(clock) {
+        if(this.level == 0) return;
         this.seg_time = this.ac.currentTime + 0.08; // gameplay is in the future
         this.seg_clock = clock;
     }
 
     click(clock) {
+        if(this.level == 0) return;
         this.state = !this.state;
         const time = (clock - this.seg_clock) / this.cpu_hz;
         this.gn.gain.setValueAtTime(this.state ? this.level : 0, time + this.seg_time);
