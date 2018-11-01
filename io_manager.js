@@ -261,8 +261,9 @@ export class IOManager
         switch(addr)
         {
             case 0xc030: // speaker toggle
-                console.log("speaker toggle");
-                break;
+                //console.log("speaker toggle");
+                return undefined;
+//                break;
             case 0xc050: // text mode off
                 //console.log("text mode off");
                 this._text_mode = false;

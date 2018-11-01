@@ -16,6 +16,7 @@ import {TextDisplay} from "./text_display.js";
 import {HiresDisplay} from "./hires_display.js";
 import {Keyboard} from "./keyboard.js";
 import {Floppy525} from "./floppy525.js";
+import {AppleAudio} from "./apple_audio.js";
 import {rom_342_0265_a} from "./rom/342-0265-a.js";
 import {rom_342_0304_cd} from "./rom/342-0304-cd.js";
 import {rom_342_0303_ef} from "./rom/342-0303-ef.js";
@@ -31,11 +32,22 @@ export class Motherboard
         this.display_hires = new HiresDisplay(canvas);
         this.floppy525 = new Floppy525(6, this.memory, floppy_led_cb);
         this.io_manager = new IOManager(this.memory, this.keyboard, this.display_text, this.display_hires);
+        this.audio = new AppleAudio();
+        this.audio.init();
+
+        this.memory.add_read_hook(this.sound_hook.bind(this));
+        this.memory.add_write_hook(this.sound_hook.bind(this));
 
         this.cycles = 0;
     }
 
+    sound_hook(addr, val) {
+        if(addr != 0xc030) return undefined;
+        this.audio.click(this.cycles);
+    }
+
     clock(count) {
+        this.audio.begin_segment(this.cycles);
         const total = this.cycles + count;
         while(this.cycles < total) {
             this.cycles += this.cpu.step();
