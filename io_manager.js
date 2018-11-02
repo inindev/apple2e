@@ -15,7 +15,7 @@
 
 export class IOManager
 {
-    constructor(memory, keyboard, display_text, display_hires) {
+    constructor(memory, keyboard, display_text, display_hires, audio_cb) {
         this._mem = memory;
         this._kbd = keyboard;
         this._display_text = display_text;
@@ -30,6 +30,8 @@ export class IOManager
         this._altchar_mode = false;
         this._80col_mode = false;
         this._double_hires = false;
+
+        this._audio_cb = audio_cb;
 
         this._bsr_write_count = 0;
 
@@ -262,8 +264,8 @@ export class IOManager
         {
             case 0xc030: // speaker toggle
                 //console.log("speaker toggle");
-                return undefined;
-//                break;
+                this._audio_cb();
+                break;
             case 0xc050: // text mode off
                 //console.log("text mode off");
                 this._text_mode = false;

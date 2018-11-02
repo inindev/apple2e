@@ -6,6 +6,9 @@
 //  Released under the GNU General Public License
 //  https://www.gnu.org/licenses/gpl.html
 //
+//  ref: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+//       https://github.com/WebKit/webkit/tree/master/Source/WebCore/Modules/webaudio
+//
 
 
 export class AppleAudio
@@ -35,16 +38,23 @@ export class AppleAudio
     }
 
     begin_segment(clock) {
-        if(this.level == 0) return;
+        if((this.level == 0) || !this.ac) return;
         this.seg_time = this.ac.currentTime + 0.08; // gameplay is in the future
         this.seg_clock = clock;
     }
 
     click(clock) {
-        if(this.level == 0) return;
+        if((this.level == 0) || !this.gn) return;
         this.state = !this.state;
         const time = (clock - this.seg_clock) / this.cpu_hz;
         this.gn.gain.setValueAtTime(this.state ? this.level : 0, time + this.seg_time);
+    }
+
+    reset() {
+        if(!this.gn) return;
+        this.state = false;
+        this.gn.gain.cancelScheduledValues(0);
+        this.gn.gain.value = 0;
     }
 }
 

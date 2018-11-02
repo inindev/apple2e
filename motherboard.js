@@ -31,19 +31,10 @@ export class Motherboard
         this.display_text = new TextDisplay(rom_342_0265_a, canvas);
         this.display_hires = new HiresDisplay(canvas);
         this.floppy525 = new Floppy525(6, this.memory, floppy_led_cb);
-        this.io_manager = new IOManager(this.memory, this.keyboard, this.display_text, this.display_hires);
         this.audio = new AppleAudio(khz);
-
-        this.memory.add_read_hook(this.sound_hook.bind(this));
-        this.memory.add_write_hook(this.sound_hook.bind(this));
+        this.io_manager = new IOManager(this.memory, this.keyboard, this.display_text, this.display_hires, this.audio_click.bind(this));
 
         this.cycles = 0;
-    }
-
-    sound_hook(addr, val) {
-        if(addr != 0xc030) return undefined;
-        this.audio.click(this.cycles);
-        return 0;
     }
 
     clock(count) {
@@ -62,12 +53,17 @@ export class Motherboard
         this.keyboard.key_up();
     }
 
+    audio_click() {
+        this.audio.click(this.cycles);
+    }
+
     reset(cold) {
         if(cold) this.memory.reset();
         this.cpu.reset();
         this.display_text.reset();
         this.display_hires.reset();
         this.floppy525.reset();
+        this.audio.reset();
         this.io_manager.reset();
         this.cycles = 0;
         this.cpu.register.pc = this.memory.read_word(0xfffc);
