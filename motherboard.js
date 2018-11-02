@@ -45,14 +45,6 @@ export class Motherboard
         }
     }
 
-    key_down(code, shift, ctrl, meta) {
-        this.keyboard.key_down(code, shift, ctrl, meta);
-    }
-
-    key_up() {
-        this.keyboard.key_up();
-    }
-
     audio_click() {
         this.audio.click(this.cycles);
     }
