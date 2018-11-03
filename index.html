@@ -30,9 +30,7 @@
         margin:20px;
         padding:12px;
         border:2px solid #5b4125;
-        box-shadow:
-          inset 0 0 0 2px #afaf83,
-          inset 0 0 0 4px #5b4125;
+        box-shadow:inset 0 0 0 2px #afaf83, inset 0 0 0 4px #5b4125;
         background:#111;
         position:relative;
     }
@@ -90,6 +88,45 @@
     }
     div.buttons>input {
         margin-left:200px;
+    }
+    input[type=range] {
+        -webkit-appearance:none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance:none;
+        box-shadow:1px 1px 1px #000, 0 0 1px #ddd;
+        border:1px solid #000;
+        margin-top:-8px;
+        height:19px;
+        width:6px;
+        border-radius:3px;
+        background:#ddc;
+        cursor:pointer;
+    }
+    input[type=range]::-moz-range-thumb {
+        box-shadow:1px 1px 1px #000, 0 0 1px #ddd;
+        border:1px solid #000;
+        height:18px;
+        width:4px;
+        border-radius:3px;
+        background:#ddc;
+        cursor:pointer;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+        height:3px;
+        cursor:pointer;
+        box-shadow:1px 1px 1px #000, 0 0 1px #ddd;
+        background:#afaf83;
+        border-radius:2px;
+        border:0.2px solid #111;
+    }
+    input[type=range]::-moz-range-track {
+        height:2px;
+        cursor:pointer;
+        box-shadow:1px 1px 1px #000, 0 0 1px #ddd;
+        background:#afaf83;
+        border-radius:2px;
+        border:0.2px solid #111;
     }
     div.drives {
         margin:0 0 0 200px;
