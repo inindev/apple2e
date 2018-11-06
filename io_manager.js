@@ -13,13 +13,63 @@
 //
 
 
+//
+//  table 2-10: display soft switches (p.29)
+//
+//    name        action  hex     function
+//    --------------------------------------------------------------------------------------
+//    AltChar     W       $C00E   off: display text using primary character set
+//    AltChar     W       $C00F   on:  display text using alternate character set
+//    RdAltChar   R7      $C01E   read AltChar switch (1 = on)
+//    --------------------------------------------------------------------------------------
+//    80Col       W       $C00C   off: display 40 columns
+//    80Col       W       $C00D   on:  display 80 columns
+//    Rd80Col     R7      $C01F   read 80Col switch (1 = on)
+//    --------------------------------------------------------------------------------------
+//    80Store     W       $C000   off: cause Page2 on to select auxiliary RAM
+//    80Store     W       $0001   on:  allow Page2 to switch main RAM areas
+//    Rd80Store   R7      $0018   read 80Store switch (1 = on)
+//    --------------------------------------------------------------------------------------
+//    Page2       R/W     $C054   off: select page 1
+//    Page2       R/W     $0055   on:  select Page2 or, if 80Store on, page 1 in auxiliary memory
+//    RdPage2     R7      $C01C   read Page2 switch (1 = on)
+//    --------------------------------------------------------------------------------------
+//    TEXT        R/W     $0050   off: display graphics or (if MIXED on) mixed
+//    TEXT        R/W     $0051   on:  display text
+//    RdTEXT      R7      $C01A   read TEXT switch (1 = on)
+//    --------------------------------------------------------------------------------------
+//    MIXED       R/W     $0052   off: display only text or only graphics
+//    MIXED       R/W     $0053   on:  (if TEXT off) display text and graphics
+//    RdMIXED     R7      $C01B   read MIXED switch (1 = on)
+//    --------------------------------------------------------------------------------------
+//    HiRes       R/W     $0056   off: (if TEXT off) display low-resolution graphics
+//    HiRes       R/W     $0057   on:  (if TEXT off) display high-resolution or (if DHiRes on) double-high-resolution graphics
+//    RdHiRes     R7      $C01D   read HiRes switch (1 = on)
+//    --------------------------------------------------------------------------------------
+//    IOUDis      W       $C07E   on:  disable IOU access for addresses $0058 to $C05F; enable access to DHiRes switch *
+//    IOUDis      W       $C07F   off: enable IOU access for addresses $0058 to $C05F; disable access to DHiRes switch *
+//    RdlOUDis    R7      $C07E   read IOUDis switch (1 = off) **
+//    --------------------------------------------------------------------------------------
+//    DHiRes      R/W     $C05E   on:  (if IOUDis on) turn on double-high-resolution
+//    DHiRes      R/W     $C05F   off: (if IOUDis on) turn off double-high-resolution
+//    RdDHiRes    R7      $C07F   read DHiRes switch (1 = on) **
+//    --------------------------------------------------------------------------------------
+//
+//    *  the firmware normally leaves IOUDis on (see also ** below)
+//    ** reading or writing any address in the range $C070-$C07F also
+//       triggers the paddle timer and resets VBLInt (see chapter 7)
+//
+
+
 export class IOManager
 {
-    constructor(memory, keyboard, display_text, display_hires, audio_cb) {
+    constructor(memory, keyboard, display_text, display_hires, display_double_hires, audio_cb) {
         this._mem = memory;
         this._kbd = keyboard;
         this._display_text = display_text;
         this._display_hires = display_hires;
+        this._display_double_hires = display_double_hires;
+        this._audio_cb = audio_cb;
 
         this._c3_rom = false;
         this._c8_rom = false;
@@ -30,8 +80,7 @@ export class IOManager
         this._altchar_mode = false;
         this._80col_mode = false;
         this._double_hires = false;
-
-        this._audio_cb = audio_cb;
+        this._iou_disable = true;
 
         this._bsr_write_count = 0;
 
@@ -89,6 +138,9 @@ export class IOManager
                     return this._altchar_mode ? 0x80 : 0;
                 case 0xc01f: // 80 col mode (0: 40 cols, 0x80: 80 cols)
                     return this._80col_mode ? 0x80 : 0;
+                case 0xc07e: // iou disable (0: iou is enabled, 0x80: iou is disabled)
+                    //console.log("iou disable: " + this._iou_disable);
+                    return this._iou_disable ? 0x80 : 0;
                 case 0xc07f: // double hires (0: double hires inactive, 0x80: double hires active)
                     //console.log("double hires: " + this._double_hires);
                     return this._double_hires ? 0 : 0x80;
@@ -135,38 +187,7 @@ export class IOManager
 
     ////////////////////////////////////////////
     write(addr, val) {
-        if(this._mem.dms_hires) {
-            if(this._mem.dms_page2) {
-                // 4000-5fff: hires graphics page 2
-                if((addr & 0xe000) == 0x4000) {
-                    this._display_hires.draw(this._mem, addr, val);
-                    return undefined; // commit to ram
-                }
-            } else {
-                // 2000-3fff: hires graphics page 1
-                if((addr & 0xe000) == 0x2000) {
-                    this._display_hires.draw(this._mem, addr, val);
-                    return undefined; // commit to ram
-                }
-            }
-        }
-
-        else if(this._text_mode) {
-            if(this._mem.dms_page2) {
-                // 0800-0bff: text page 2
-                if((addr & 0xfc00) == 0x0800) {
-                    this._display_text.draw_text(this._mem, addr, val);
-                    return undefined; // commit to ram
-                }
-            } else {
-                // 0400-07ff: text page 1
-                if((addr & 0xfc00) == 0x0400) {
-                    this._display_text.draw_text(this._mem, addr, val);
-                    return undefined; // commit to ram
-                }
-            }
-        }
-
+        this.draw_display(addr, val);
 
         // c000-c0ff: write switches
         if((addr & 0xff00) == 0xc000) {
@@ -230,11 +251,17 @@ export class IOManager
                     return 0; // write handled
                 case 0xc00c: // 80 col off
                     //console.log("80 col off");
-                    this._80col_mode = false;
+                    if(this._80col_mode) {
+                        this._80col_mode = false;
+                        this.switch_display_mode();
+                    }
                     return 0; // write handled
                 case 0xc00d: // 80 col on
                     //console.log("80 col on");
-                    this._80col_mode = true;
+                    if(!this._80col_mode) {
+                        this._80col_mode = true;
+                        this.switch_display_mode();
+                    }
                     return 0; // write handled
                 case 0xc00e: // alt char off
                     //console.log("alt char off");
@@ -244,9 +271,15 @@ export class IOManager
                     //console.log("alt char on");
                     this._altchar_mode = true;
                     return 0; // write handled
-                //case 0xc010: // keyboard strobe
+                //case 0xc010: // keyboard strobe (handled above)
                 //    this._kbd.strobe();
                 //    return 0; // write handled
+                case 0xc07e: // iou disable on
+                    this._iou_disable = true;
+                    return 0; // write handled
+                case 0xc07f: // iou disable off
+                    this._iou_disable = false;
+                    return 0; // write handled
                 default:
                     break;
             }
@@ -268,58 +301,78 @@ export class IOManager
                 break;
             case 0xc050: // text mode off
                 //console.log("text mode off");
-                this._text_mode = false;
+                if(this._text_mode) {
+                    this._text_mode = false;
+                    this.switch_display_mode();
+                }
                 break;
             case 0xc051: // text mode on
                 //console.log("text mode on");
-                this._text_mode = true;
+                if(!this._text_mode) {
+                    this._text_mode = true;
+                    this.switch_display_mode();
+                }
                 break;
-            case 0xc052: // full screen
+            case 0xc052: // mixed mode off
                 //console.log("mixed mode off");
-                this._mixed_mode = false;
+                if(this._mixed_mode) {
+                    this._mixed_mode = false;
+                    this.switch_display_mode();
+                }
                 break;
-            case 0xc053: // mixed mode
+            case 0xc053: // mixed mode on
                 //console.log("mixed mode on");
-                this._mixed_mode = true;
+                if(!this._mixed_mode) {
+                    this._mixed_mode = true;
+                    this.switch_display_mode();
+                }
                 break;
             case 0xc054: // page2 off
                 //console.log("page2 off");
                 if(this._mem.dms_page2) {
                     this._mem.dms_page2 = false;
-//                    if(!this._mem.dms_80store) for(let a=0x400; a<0x800; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
+                    if(!this._mem.dms_80store) this.switch_display_mode();
                 }
                 break;
             case 0xc055: // page2 on
                 //console.log("page2 on");
                 if(!this._mem.dms_page2) {
                     this._mem.dms_page2 = true;
-//                    if(!this._mem.dms_80store) for(let a=0x800; a<0xc00; a++) this._display_text.draw_text(this._mem, a, this._mem.read(a));
+                    if(!this._mem.dms_80store) this.switch_display_mode();
                 }
                 break;
             case 0xc056: // hires off
                 //console.log("hires off");
                 if(this._mem.dms_hires) {
                     this._mem.dms_hires = false;
-//                    if(!this._mem.dms_80store) for(let a=0x2000; a<0x4000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
+                    this.switch_display_mode();
                 }
                 break;
             case 0xc057: // hires on
                 //console.log("hires on");
                 if(!this._mem.dms_hires) {
                     this._mem.dms_hires = true;
-//                    if(!this._mem.dms_80store) for(let a=0x4000; a<0x6000; a++) this._display_hires.draw(this._mem, a, this._mem.read(a));
+// TODO: emperical testing suggests we clear the ram before enabling
+//for(let a=0x2000; a<0x4000; a++) this._mem._main[a] = 0;
+                    this.switch_display_mode();
                 }
                 break;
             case 0xc05e: // double hires on
-                if(this._80col_mode) {
-                    console.log("double hires on");
-                    this._double_hires = true;
+                if(this._iou_disable) {
+                    //console.log("double hires on");
+                    if(!this._mem._double_hires) {
+                        this._double_hires = true;
+                        this.switch_display_mode();
+                    }
                 }
                 break;
             case 0xc05f: // double hires off
-                if(this._80col_mode) {
-                    console.log("double hires off");
-                    this._double_hires = false;
+                if(this._iou_disable) {
+                    //console.log("double hires off");
+                    if(this._mem._double_hires) {
+                        this._double_hires = false;
+                        this.switch_display_mode();
+                    }
                 }
                 break;
             default: // bsr: c080-c08f
@@ -351,12 +404,80 @@ export class IOManager
     }
 
 
+    draw_display(addr, val) {
+        if(this._text_mode) {
+            // 0400-07ff: text page 1
+            // 0800-0bff: text page 2
+            if( ((addr & 0xfc00) == 0x0400) ||
+                (((addr & 0xfc00) == 0x0800) && this._mem.dms_page2 && !this._mem.dms_80store) ) {
+                this._display_text.draw_text(addr, val);
+            }
+        } else {
+            // 2000-3fff: graphics page 1
+            // 4000-5fff: graphics page 2
+            if( ((addr & 0xe000) == 0x2000) ||
+                (((addr & 0xe000) == 0x4000) && this._mem.dms_page2 && !this._mem.dms_80store) ) {
+                if(this._mem.dms_hires) {
+                    // hires graphics modes
+                    if(this._double_hires) {
+                        this._display_double_hires.draw(addr);
+                    } else {
+                        this._display_hires.draw(addr, val);
+                    }
+                } else {
+                    // TODO: lores graphics modes
+                }
+            }
+        }
+    }
+
+
+    switch_display_mode() {
+        this._display_text.reset();
+        this._display_hires.reset();
+        this._display_double_hires.reset();
+
+        const is_page2 = this._mem.dms_page2 && !this._mem.dms_80store;
+
+        if(this._text_mode) {
+            // text mode
+            //console.log("enabling text mode: " + (is_page2 ? "page2" : "page1"));
+            this._display_text.set_active_page(is_page2 ? 2 : 1);
+        } else {
+            // graphics modes
+            // TODO: mixed modes
+            if(this._mem.dms_hires) {
+                if(this._double_hires) {
+                    //console.log("enabling double-hires graphics mode: " + (is_page2 ? "page2" : "page1"));
+                    this._display_double_hires.set_active_page(is_page2 ? 2 : 1);
+                } else {
+                    //console.log("enabling hires graphics mode: " + (is_page2 ? "page2" : "page1"));
+                    this._display_hires.set_active_page(is_page2 ? 2 : 1);
+                }
+            } else {
+                // TODO: lores graphics
+                if(this._double_hires) {
+                    //console.log("enabling " + (this._mixed_mode ? "mixed " : "") + "double-lores graphics mode, " + (is_page2 ? "page2" : "page1"));
+                } else {
+                    //console.log("enabling " + (this._mixed_mode ? "mixed " : "") + "lores graphics mode, " + (is_page2 ? "page2" : "page1"));
+                }
+            }
+        }
+    }
+
+
     reset() {
         this._c3_rom = false;
         this._c8_rom = false;
         this._cx_rom = false;
 
         this._text_mode = true;
+        this._mixed_mode = false;
+        this._altchar_mode = false;
+        this._80col_mode = false;
+        this._double_hires = false;
+        this._iou_disable = true;
+
         this._bsr_write_count = 0;
     }
 }

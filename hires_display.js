@@ -20,10 +20,21 @@
 
 export class HiresDisplay
 {
-    constructor(canvas, hlines, vlines) {
+    constructor(memory, canvas, hlines, vlines) {
+        this._mem = memory;
+
         canvas.width = 564;  // 7*2*40 + 4
         canvas.height = 390; // 8*2*24 + 6
+
         this._context = canvas.getContext('2d', {alpha: false});
+        this._context.imageSmoothingEnabled = false;
+        this._context.webkitImageSmoothingEnabled = false;
+
+        this._id1 = this._context.createImageData(564, 390);
+        this._id2 = this._context.createImageData(564, 390);
+        this._id = undefined;
+        this._page1_init = false;
+        this._page2_init = false;
 
         // color palette
         this.purple = 0xff22dd;
@@ -81,25 +92,25 @@ export class HiresDisplay
                 data[x+1] = data[x+5] = g;
                 data[x+2] = data[x+6] = b;
                 // horizontal scan bar
-                data[x+72] = data[x+76] = rhs;
-                data[x+73] = data[x+77] = ghs;
-                data[x+74] = data[x+78] = bhs;
+                data[x+2256] = data[x+2260] = rhs;
+                data[x+2257] = data[x+2261] = ghs;
+                data[x+2258] = data[x+2262] = bhs;
                 draw = false;
             }
 
             if(this._vlines && !oe) {
                 // vertical scan bar
-                data[x]   = data[x+4] = data[x+72] = data[x+76] = rvs;
-                data[x+1] = data[x+5] = data[x+73] = data[x+77] = gvs;
-                data[x+2] = data[x+6] = data[x+74] = data[x+78] = bvs;
+                data[x]   = data[x+4] = data[x+2256] = data[x+2260] = rvs;
+                data[x+1] = data[x+5] = data[x+2257] = data[x+2261] = gvs;
+                data[x+2] = data[x+6] = data[x+2258] = data[x+2262] = bvs;
                 draw = false;
             }
 
             if(draw) {
                 // regular color
-                data[x]   = data[x+4] = data[x+72] = data[x+76] = r;
-                data[x+1] = data[x+5] = data[x+73] = data[x+77] = g;
-                data[x+2] = data[x+6] = data[x+74] = data[x+78] = b;
+                data[x]   = data[x+4] = data[x+2256] = data[x+2260] = r;
+                data[x+1] = data[x+5] = data[x+2257] = data[x+2261] = g;
+                data[x+2] = data[x+6] = data[x+2258] = data[x+2262] = b;
             }
         };
     }
@@ -125,7 +136,7 @@ export class HiresDisplay
     }
 
 
-    draw(mem, addr, val) {
+    draw(addr, val) {
         // rows are 120 columns wide consuming 128 bytes (0-119)+8
         // every 40 columns rows wrap for a total of three wraps
         // 8 rows wrapping 3 times creates a total of 24 rows
@@ -186,8 +197,8 @@ export class HiresDisplay
         //  +v+          -> pix0 (-1)
         //  56012345601
         //  ppcccccccnn
-        const prev = (col < 1) ? 0 : mem.read(addr-1);
-        const next = (col > 38) ? 0 : mem.read(addr+1);
+        const prev = (col < 1) ? 0 : this._mem.read(addr-1);
+        const next = (col > 38) ? 0 : this._mem.read(addr+1);
 
         //     <--- read ---
         // nnnnnnncccccccppppppp
@@ -198,17 +209,40 @@ export class HiresDisplay
         // row: 0-191, col: 0-39
         const ox = (col * 14) + 1;
         const oy = (row * 2) + 3;
-
-        const id = this._context.getImageData(ox, oy, 18, 2);
+        const lo = (ox + oy * 564) * 4;
+        const id = (addr < 0x4000) ? this._id1 : this._id2;
+        const data = id.data;
 
         let oe = col & 0x01;
-        for(let x=0; x<72; x+=8) {
-            color_group[oe][val & 0x07](id.data, oe, x);
+        for(let x=lo, xmax=lo+72; x<xmax; x+=8) {
+            color_group[oe][val & 0x07](data, oe, x);
             val >>= 1;
             oe ^= 1;
         }
 
-        this._context.putImageData(id, ox, oy, 0, 0, 18, 2);
+        if(id == this._id) this._context.putImageData(this._id, 0, 0, ox, oy, 18, 2);
+    }
+
+
+    set_active_page(page) {
+        if(page != 2) {
+            // select page 1
+            if(!this._page1_init) {
+                this._id = undefined;
+                for(let a=0x2000; a<0x4000; a++) this.draw(a, this._mem.read(a));
+                this._page1_init = true;
+            }
+            this._id = this._id1;
+        } else {
+            // select page 2
+            if(!this._page2_init) {
+                this._id = undefined;
+                for(let a=0x4000; a<0x6000; a++) this.draw(a, this._mem.read(a));
+                this._page2_init = true;
+            }
+            this._id = this._id2;
+        }
+        this._context.putImageData(this._id, 0, 0);
     }
 
 
@@ -217,14 +251,17 @@ export class HiresDisplay
         const r = (this.black >> 16) & 0xff;
         const g = (this.black >> 8) & 0xff;
         const b = this.black & 0xff;
-        const id = this._context.createImageData(564, 390);
         const imax = 564 * 390 * 4; // (560+4, 384+6) * rgba
         for(let i=0; i<imax; i+=4) {
-            id.data[i]   = r;
-            id.data[i+1] = g;
-            id.data[i+2] = b;
-            id.data[i+3] = 0xff;
+            this._id1.data[i]   = this._id2.data[i]   = r;
+            this._id1.data[i+1] = this._id2.data[i+1] = g;
+            this._id1.data[i+2] = this._id2.data[i+2] = b;
+            this._id1.data[i+3] = this._id2.data[i+3] = 0xff;
         }
-        this._context.putImageData(id, 0, 0);
+        this._context.putImageData(this._id1, 0, 0);
+        this._id = undefined;
+        this._page1_init = false;
+        this._page2_init = false;
     }
 }
+

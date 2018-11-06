@@ -14,10 +14,10 @@ import {Memory} from "./memory.js";
 import {IOManager} from "./io_manager.js";
 import {TextDisplay} from "./text_display.js";
 import {HiresDisplay} from "./hires_display.js";
+import {DoubleHiresDisplay} from "./double_hires_display.js";
 import {Keyboard} from "./keyboard.js";
 import {Floppy525} from "./floppy525.js";
 import {AppleAudio} from "./apple_audio.js";
-import {rom_342_0265_a} from "./rom/342-0265-a.js";
 import {rom_342_0304_cd} from "./rom/342-0304-cd.js";
 import {rom_342_0303_ef} from "./rom/342-0303-ef.js";
 
@@ -28,11 +28,12 @@ export class Motherboard
         this.memory = new Memory(rom_342_0304_cd, rom_342_0303_ef);
         this.cpu = new W65C02S(this.memory);
         this.keyboard = new Keyboard();
-        this.display_text = new TextDisplay(rom_342_0265_a, canvas);
-        this.display_hires = new HiresDisplay(canvas);
+        this.display_text = new TextDisplay(this.memory, canvas);
+        this.display_hires = new HiresDisplay(this.memory, canvas);
+        this.display_double_hires = new DoubleHiresDisplay(this.memory, canvas);
         this.floppy525 = new Floppy525(6, this.memory, floppy_led_cb);
         this.audio = new AppleAudio(khz);
-        this.io_manager = new IOManager(this.memory, this.keyboard, this.display_text, this.display_hires, this.audio_click.bind(this));
+        this.io_manager = new IOManager(this.memory, this.keyboard, this.display_text, this.display_hires, this.display_double_hires, this.audio_click.bind(this));
 
         this.cycles = 0;
     }
@@ -54,16 +55,21 @@ export class Motherboard
         this.cpu.reset();
         this.display_text.reset();
         this.display_hires.reset();
+        this.display_double_hires.reset();
         this.floppy525.reset();
         this.audio.reset();
         this.io_manager.reset();
+
         this.cycles = 0;
+
+        for(let a=0x0400; a<0x0800; a++) this.memory._main[a] = 0xa0;
+        this.display_text.set_active_page(1);  // text page 1 is default
         this.cpu.register.pc = this.memory.read_word(0xfffc);
     }
 
     message(text) {
         const addr = 0x43b - ((text.length / 2) & 0x0f);
-        for(let i=0; i<text.length; i++) this.display_text.draw_text(this.memory, addr+i, text.charCodeAt(i)+0x80);
+        for(let i=0; i<text.length; i++) this.display_text.draw_text(addr+i, text.charCodeAt(i)+0x80);
     }
 }
 
