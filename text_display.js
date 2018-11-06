@@ -142,7 +142,6 @@ export class TextDisplay
 
 
     reset() {
-        const imax = 564 * 390 * 4; // (560+4, 384+6) * rgba
         const r = (this.black >> 16) & 0xff;
         const g = (this.black >> 8) & 0xff;
         const b = this.black & 0xff;
