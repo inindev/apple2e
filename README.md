@@ -9,12 +9,12 @@ Virtual Apple IIe <a target="_blank" href="https://inindev.github.io/apple2e/ind
 
 TODO List:
 
-- sound
+- ~~sound~~
 
 video
- - text & graphics modes
+ - ~~text & graphics modes~~
  - lores graphics
- - double hires graphics
+ - ~~double hires graphics~~
 
 disk io
  - disk writing
