@@ -290,13 +290,17 @@
             const nvp = token.split('=');
             if(nvp.length == 2) params[nvp[0]] = nvp[1];
         }
-        const u1 = params["u1"];
-        const n1 = params["n1"];
-        if(u1) load_disk(0, n1, u1);
 
         const u2 = params["u2"];
         const n2 = params["n2"];
         if(u2) load_disk(1, n2, u2);
+
+        const u1 = params["u1"];
+        const n1 = params["n1"];
+        if(u1) {
+            load_disk(0, n1, u1);
+            run();
+        }
     }
 
     function key_down(e) {
