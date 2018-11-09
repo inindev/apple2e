@@ -100,9 +100,8 @@ export class Floppy525
         this._mem.add_read_hook(this.read.bind(this));
         this._mem.add_write_hook(this.write.bind(this));
 
-        this._disk0 = new Disk(0, led_cb);
-        this._disk1 = new Disk(1, led_cb);
-        this._active_disk = this._disk0;
+        this._disks = [new Disk(0, led_cb), new Disk(1, led_cb)];
+        this._active_disk = this._disks[0];
     }
 
 
@@ -143,21 +142,21 @@ export class Floppy525
     select(op, io_write) {
         switch(op) {
             case 0x08: // motors off
-                this._disk0.set_led(false);
-                this._disk1.set_led(false);
+                this._disks[0].set_led(false);
+                this._disks[1].set_led(false);
                 break;
             case 0x09: // selected drive motor on
                 this._active_disk.set_led(true);
                 break;
             case 0x0a: // engage drive 1
-                this._disk1.set_led(false);
-                this._disk0.set_led(true);
-                this._active_disk = this._disk0;
+                this._disks[1].set_led(false);
+                this._disks[0].set_led(true);
+                this._active_disk = this._disks[0];
                 break;
             case 0x0b: // engage drive 2
-                this._disk0.set_led(false);
-                this._disk1.set_led(true);
-                this._active_disk = this._disk1;
+                this._disks[0].set_led(false);
+                this._disks[1].set_led(true);
+                this._active_disk = this._disks[1];
                 break;
             case 0x0c: // data strobe (q6l)
                 if(!io_write) return this._active_disk.read();
@@ -196,13 +195,13 @@ export class Floppy525
         }
         const src = new Uint8Array(bin);
 
-        this._active_disk.name = name;
+        this._disks[num].name = name;
         for(let t=0; t<35; t++) {
             let track = [];
             for(let s=15; s>=0; s--) {
                 track = track.concat(this.sector_62encode(src, t, s));
             }
-            this._active_disk.tracks[t] = new Uint8Array(track); // 6288 bytes, pack the array
+            this._disks[num].tracks[t] = new Uint8Array(track); // 6288 bytes, pack the array
         }
 
         return true;
@@ -252,9 +251,9 @@ export class Floppy525
 
 
     reset() {
-        this._disk0.reset();
-        this._disk1.reset();
-        this._active_disk = this._disk0;
+        this._disks[0].reset();
+        this._disks[1].reset();
+        this._active_disk = this._disks[0];
     }
 }
 
