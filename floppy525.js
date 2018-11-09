@@ -190,19 +190,22 @@ export class Floppy525
 
     load_disk(num, name, bin) {
         console.log("loading disk " + (num+1) + ": " + name);
-        if(bin.length != 143360) {
+        if(bin.byteLength != 143360) {
             console.log("error, invalid disk image size: " + bin.length);
-            return;
+            return false;
         }
+        const src = new Uint8Array(bin);
 
         this._active_disk.name = name;
         for(let t=0; t<35; t++) {
             let track = [];
             for(let s=15; s>=0; s--) {
-                track = track.concat(this.sector_62encode(bin, t, s));
+                track = track.concat(this.sector_62encode(src, t, s));
             }
             this._active_disk.tracks[t] = new Uint8Array(track); // 6288 bytes, pack the array
         }
+
+        return true;
     }
 
 
@@ -231,7 +234,7 @@ export class Floppy525
         const data62 = [];
         const offs = (trk << 12) | (sec_ni << 8);
         for(let i=255, i2=83; i>=0; i--, i2=i%86) {
-            const val = src.charCodeAt(i + offs);
+            const val = src[i + offs];
             data62[i+86] = val >> 2;
             data62[i2] = (data62[i2] << 2) | ((val & 0x01) << 1) | ((val & 0x02) >> 1);
         }

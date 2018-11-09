@@ -219,6 +219,7 @@
     let last_ms;
     let mouse_offs = 0;
 
+
     function stop() {
         run_stop_btn.innerText = "run";
         if(interval) {
@@ -261,7 +262,41 @@
         fr.onload = () => {
             motherboard.floppy525.load_disk(num, file.name, fr.result);
         };
-        fr.readAsBinaryString(file);
+        fr.readAsArrayBuffer(file);
+    }
+
+    function load_disk(num, name, url) {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url);
+        xhr.responseType = "arraybuffer";
+        xhr.onload = () => {
+            if(xhr.status != 200) {
+                console.log("failed to load " + url + "  status: " + xhr.status);
+                return;
+            }
+            const bin = xhr.response;
+            const rc = motherboard.floppy525.load_disk(num, name, bin);
+            if(rc) {
+                console.log("disk " + (num+1) + " loaded: " + url);
+            }
+        };
+        xhr.send();
+    }
+
+    function parse_params() {
+        let params = [];
+        const tokens = window.location.search.substr(1).split("&");
+        for(let token of tokens) {
+            const nvp = token.split('=');
+            if(nvp.length == 2) params[nvp[0]] = nvp[1];
+        }
+        const u1 = params["u1"];
+        const n1 = params["n1"];
+        if(u1) load_disk(0, n1, u1);
+
+        const u2 = params["u2"];
+        const n2 = params["n2"];
+        if(u2) load_disk(1, n2, u2);
     }
 
     function key_down(e) {
@@ -307,6 +342,8 @@
         run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
         document.getElementById("reset").addEventListener("click", reset);
         document.querySelector("div.buttons>input").addEventListener("change", (e)=>{motherboard.audio.level=e.target.value});
+
+        parse_params();
 
         motherboard.message('press "run" below to start vm');
     }
