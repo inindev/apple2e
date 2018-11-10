@@ -25,11 +25,11 @@ export class AppleAudio
 
     init() {
         if(this.ac) return;
-        this.ac = new AudioContext();
-        const osc = new OscillatorNode(this.ac, {channelCount:1, channelCountMode:"explicit", frequency:0});
-        const ws = new WaveShaperNode(this.ac, {channelCount:1, channelCountMode:"explicit"});
+        this.ac = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = this.ac.createOscillator({channelCount:1, channelCountMode:"explicit", frequency:0});
+        const ws = this.ac.createWaveShaper({channelCount:1, channelCountMode:"explicit"});
         ws.curve = new Float32Array([-1, -1]);
-        this.gn = new GainNode(this.ac, {channelCount:1, channelCountMode:"explicit", gain:0});
+        this.gn = this.ac.createGain({channelCount:1, channelCountMode:"explicit", gain:0});
 
         osc.connect(ws);
         ws.connect(this.gn);
