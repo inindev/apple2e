@@ -59,19 +59,6 @@
         background:#afaf83;
         border:2px groove #cfcfa3;
     }
-    div.settings {
-        margin:200px 32px 32px 32px;
-        padding:6px;
-        border:2px groove #cfcfa3;
-    }
-    div.settings>div {
-        margin:8px;
-    }
-    select#color {
-        width:8em;
-        border:1px solid #afaf83;
-        border-radius:2px;
-    }
     div.middle {
         margin-left:30px;
     }
@@ -172,6 +159,20 @@
         box-shadow:0 0 6px #d48;
         background:radial-gradient(#d00, #900);
     }
+    div.settings {
+        margin:0 0 0 18px;
+        padding:6px;
+        border:2px groove #cfcfa3;
+        display:inline-block;
+    }
+    div.settings>div {
+        margin:6px;
+    }
+    select#color {
+        width:8em;
+        border:1px solid #afaf83;
+        border-radius:2px;
+    }
     div.doc {
         margin:20px 0 0 200px;
         display:flex;
@@ -193,27 +194,6 @@
       </div>
       <div class="side">
         <div class="sizer"></div>
-        <div>
-          <div class="settings">
-            <div>
-              <button id="fullscreen">full screen</button>
-            </div>
-            <div>
-              <select id="color">
-                <option value="color">color</option>
-                <option value="green" selected>green</option>
-                <option value="amber">amber</option>
-              </select>
-            </div>
-            <div>
-              <nobr><input type="checkbox" id="hscan" checked><label for="hscan"> horizontal scanlines</label></nobr>
-            </div>
-            <div>
-              <nobr><input type="checkbox" id="vscan" checked><label for="vscan"> vertical scanlines (hgr)</label></nobr>
-            </div>
-          </div>
-          <div></div>
-        </div>
       </div>
     </div>
     <div class="middle">
@@ -226,6 +206,27 @@
         <div class="drive" id="drive1"><span>Drive 1</span><input type="file"><span class="led">&nbsp;</span></div>
         <div class="drive" id="drive2"><span>Drive 2</span><input type="file"><span class="led">&nbsp;</span></div>
       </div>
+
+        <div class="settings">
+          <div>
+            <button id="fullscreen">full screen</button>
+          </div>
+          <div>
+            <select id="color">
+              <option value="color">color</option>
+              <option value="green">green</option>
+              <option value="amber">amber</option>
+            </select>
+          </div>
+          <div>
+            <nobr><input type="checkbox" id="hscan"><label for="hscan"> horizontal scanlines</label></nobr>
+          </div>
+          <div>
+            <nobr><input type="checkbox" id="vscan"><label for="vscan"> vertical scanlines (hgr)</label></nobr>
+          </div>
+        </div>
+
+
     </div>
     <div class="doc">
       <div class="col1">
@@ -292,22 +293,25 @@
     }
 
     function display_color(e) {
-        const rgb = {color:0xe0e0e0, green:0x00ff66, amber:0xfed328}[e.target.value];
+        const rgb = {color:0xe0e0e0, green:0x00ff66, amber:0xffd429}[e.target.value];
         motherboard.display_text.fore = rgb;
         //motherboard.display_hires.fore = rgb;
         //motherboard.display_double_hires.fore = rgb;
+        localStorage.setItem("settings.color", e.target.value);
     }
 
     function display_hscan(e) {
         motherboard.display_text.hlines = e.target.checked;
         motherboard.display_hires.hlines = e.target.checked;
         //motherboard.display_double_hires.hlines = e.target.checked;
+        localStorage.setItem("settings.hscan", e.target.checked);
     }
 
     function display_vscan(e) {
         //motherboard.display_text.vlines = e.target.checked;
         motherboard.display_hires.vlines = e.target.checked;
         //motherboard.display_double_hires.vlines = e.target.checked;
+        localStorage.setItem("settings.vscan", e.target.checked);
     }
 
     function file_select(e, num) {
@@ -386,7 +390,11 @@
         window.addEventListener('resize', on_resize);
         document.querySelector("div.sizer").addEventListener("mousedown", begin_resize, false);
 
+        document.querySelector("div.display").style.width = localStorage.getItem("settings.display.width") || "916";
+        window.dispatchEvent(new Event('resize'));
+
         canvas = document.querySelector("div.display>div>canvas");
+
         const drive_leds = document.querySelectorAll("span.led");
         motherboard = new Motherboard(khz, canvas, (n,s)=>{drive_leds[n].className=s?"led on":"led"});
         motherboard.reset();
@@ -403,9 +411,20 @@
         document.addEventListener('keyup', key_up);
 
         document.getElementById("fullscreen").addEventListener("click", display_fullscreen);
-        document.getElementById("color").addEventListener("change", display_color);
-        document.getElementById("hscan").addEventListener("change", display_hscan);
-        document.getElementById("vscan").addEventListener("change", display_vscan);
+        const color = document.getElementById("color");
+        color.addEventListener("change", display_color);
+        color.value = localStorage.getItem("settings.color") || "green";
+        color.dispatchEvent(new Event('change'));
+
+        const hscan = document.getElementById("hscan");
+        hscan.addEventListener("change", display_hscan);
+        hscan.checked = localStorage.getItem("settings.hscan") !== "false";
+        hscan.dispatchEvent(new Event('change'));
+
+        const vscan = document.getElementById("vscan");
+        vscan.addEventListener("change", display_vscan);
+        vscan.checked = localStorage.getItem("settings.vscan") !== "false";
+        vscan.dispatchEvent(new Event('change'));
 
         run_stop_btn = document.getElementById("run_stop");
         run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
@@ -429,6 +448,7 @@
             const r = ((display.offsetWidth - 70) / 282) & 0x3fff;
             canvas.style.width = (r * 282)+"px";
             canvas.style.height = (r * 195)+"px";
+            localStorage.setItem("settings.display.width", r * 306);
         }
     }
     function begin_resize(e) {
