@@ -67,10 +67,16 @@ export class HiresDisplay
     }
 
     get hlines() { return this._hlines; }
-    set hlines(val) { this._hlines = (val != 0); }
-    get vlines() { return this._vlines; }
-    set vlines(val) { this._vlines = (val != 0); }
+    set hlines(val) {
+        this._hlines = (val != 0);
+        this.refresh();
+    }
 
+    get vlines() { return this._vlines; }
+    set vlines(val) {
+        this._vlines = (val != 0);
+        this.refresh();
+    }
 
     get_color_fcn(rgb, hscan, vscan) {
         const r = (rgb >> 16) & 0xff;
@@ -115,7 +121,6 @@ export class HiresDisplay
         };
     }
 
-
     init_color_table() {
         const fpurple = this.get_color_fcn(this.purple, this.purple_hscan, this.purple_vscan);
         const fblue   = this.get_color_fcn(this.blue,   this.blue_hscan,   this.blue_vscan);
@@ -134,7 +139,6 @@ export class HiresDisplay
         this.group1 = [group1e, group1o];
         this.group2 = [group2e, group2o];
     }
-
 
     draw(addr, val) {
         // rows are 120 columns wide consuming 128 bytes (0-119)+8
@@ -223,12 +227,26 @@ export class HiresDisplay
         if(id == this._id) this._context.putImageData(this._id, 0, 0, ox, oy, 18, 2);
     }
 
+    refresh() {
+        if(this._id == this._id1) {
+            this._id = undefined; // suspend rendering
+            for(let a=0x2000; a<0x4000; a++) this.draw(a, this._mem.read(a));
+            this._id = this._id1;
+            this._context.putImageData(this._id, 0, 0);
+        }
+        else if(this._id == this._id2) {
+            this._id = undefined; // suspend rendering
+            for(let a=0x4000; a<0x6000; a++) this.draw(a, this._mem.read(a));
+            this._id = this._id2;
+            this._context.putImageData(this._id, 0, 0);
+        }
+    }
 
     set_active_page(page) {
         if(page != 2) {
             // select page 1
             if(!this._page1_init) {
-                this._id = undefined;
+                this._id = undefined; // suspend rendering
                 for(let a=0x2000; a<0x4000; a++) this.draw(a, this._mem.read(a));
                 this._page1_init = true;
             }
@@ -236,7 +254,7 @@ export class HiresDisplay
         } else {
             // select page 2
             if(!this._page2_init) {
-                this._id = undefined;
+                this._id = undefined; // suspend rendering
                 for(let a=0x4000; a<0x6000; a++) this.draw(a, this._mem.read(a));
                 this._page2_init = true;
             }
@@ -244,7 +262,6 @@ export class HiresDisplay
         }
         this._context.putImageData(this._id, 0, 0);
     }
-
 
     reset() {
         this.init_color_table();

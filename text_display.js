@@ -47,6 +47,7 @@ export class TextDisplay
         this._frl = this._hlines ? this._fr>>1 : this._fr;
         this._fgl = this._hlines ? this._fg>>1 : this._fg;
         this._fbl = this._hlines ? this._fb>>1 : this._fb;
+        this.refresh();
     };
 
     get back() {
@@ -56,6 +57,7 @@ export class TextDisplay
         this._br = (rgb >> 16) & 0xff;
         this._bg = (rgb >> 8) & 0xff;
         this._bb = rgb & 0xff;
+        this.refresh();
     };
 
     get hlines() {
@@ -66,8 +68,8 @@ export class TextDisplay
         this._frl = this._hlines ? this._fr>>1 : this._fr;
         this._fgl = this._hlines ? this._fg>>1 : this._fg;
         this._fbl = this._hlines ? this._fb>>1 : this._fb;
+        this.refresh();
     };
-
 
     draw_text(addr, val) {
         // rows are 120 columns wide consuming 128 bytes (0-119)+8
@@ -80,7 +82,6 @@ export class TextDisplay
         const id = (addr < 0x0800) ? this._id1 : this._id2;
         this.draw_char40(id, row, col, val);
     }
-
 
     // draw 14x16 char
     draw_char40(id, row, col, char) {
@@ -118,12 +119,26 @@ export class TextDisplay
         if(id == this._id) this._context.putImageData(this._id, 0, 0, ox, oy, 14, 16);
     }
 
+    refresh() {
+        if(this._id == this._id1) {
+            this._id = undefined; // suspend rendering
+            for(let a=0x0400; a<0x0800; a++) this.draw_text(a, this._mem.read(a));
+            this._id = this._id1;
+            this._context.putImageData(this._id, 0, 0);
+        }
+        else if(this._id == this._id2) {
+            this._id = undefined; // suspend rendering
+            for(let a=0x0800; a<0x0c00; a++) this.draw_text(a, this._mem.read(a));
+            this._id = this._id2;
+            this._context.putImageData(this._id, 0, 0);
+        }
+    }
 
     set_active_page(page) {
         if(page != 2) {
             // select page 1
             if(!this._page1_init) {
-                this._id = undefined;
+                this._id = undefined; // suspend rendering
                 for(let a=0x0400; a<0x0800; a++) this.draw_text(a, this._mem.read(a));
                 this._page1_init = true;
             }
@@ -131,7 +146,7 @@ export class TextDisplay
         } else {
             // select page 2
             if(!this._page2_init) {
-                this._id = undefined;
+                this._id = undefined; // suspend rendering
                 for(let a=0x0800; a<0x0c00; a++) this.draw_text(a, this._mem.read(a));
                 this._page2_init = true;
             }
@@ -139,7 +154,6 @@ export class TextDisplay
         }
         this._context.putImageData(this._id, 0, 0);
     }
-
 
     reset() {
         const r = (this.black >> 16) & 0xff;
