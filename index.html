@@ -223,8 +223,8 @@
         <input type="range" min="0" max="1" value="0.8" step="0.1">
       </div>
       <div class="drives">
-        <div class="drive"><span>Drive 1</span><input type="file"><span class="led">&nbsp;</span></div>
-        <div class="drive"><span>Drive 2</span><input type="file"><span class="led">&nbsp;</span></div>
+        <div class="drive" id="drive1"><span>Drive 1</span><input type="file"><span class="led">&nbsp;</span></div>
+        <div class="drive" id="drive2"><span>Drive 2</span><input type="file"><span class="led">&nbsp;</span></div>
       </div>
     </div>
     <div class="doc">
@@ -287,8 +287,8 @@
     }
 
     function display_fullscreen(e) {
-        const fullScreen = (canvas.requestFullScreen || canvas.mozRequestFullScreen || canvas.webkitRequestFullScreen).bind(canvas);
-        fullScreen();
+        const fullscreen = (canvas.requestFullscreen || canvas.mozRequestFullScreen || canvas.webkitRequestFullscreen).bind(canvas);
+        fullscreen();
     }
 
     function display_color(e) {
@@ -391,11 +391,12 @@
         motherboard = new Motherboard(khz, canvas, (n,s)=>{drive_leds[n].className=s?"led on":"led"});
         motherboard.reset();
 
-        const drives = document.querySelectorAll("div.drive>input");
-        drives[0].addEventListener('change', (e)=>{file_select(e, 0)});
-        if(drives[0].value) drives[0].dispatchEvent(new Event('change'));
-        drives[1].addEventListener('change', (e)=>{file_select(e, 1)});
-        if(drives[1].value) drives[1].dispatchEvent(new Event('change'));
+        const drive1 = document.getElementById("drive1");
+        drive1.addEventListener('change', (e)=>{file_select(e, 0)});
+        if(drive1.value) drive1.dispatchEvent(new Event('change'));
+        const drive2 = document.getElementById("drive2");
+        drive2.addEventListener('change', (e)=>{file_select(e, 1)});
+        if(drive2.value) drive2.dispatchEvent(new Event('change'));
 
         const ff = navigator.userAgent.toLowerCase().indexOf('firefox') > 0;
         document.addEventListener('keydown', ff?key_down:key_down_trans);
