@@ -20,7 +20,7 @@
 
 export class HiresDisplay
 {
-    constructor(memory, canvas, hlines, vlines) {
+    constructor(memory, canvas) {
         this._mem = memory;
 
         canvas.width = 564;  // 7*2*40 + 4
@@ -36,13 +36,16 @@ export class HiresDisplay
         this._page1_init = false;
         this._page2_init = false;
 
+        // when set, tjos over-rides color
+        this._monochrome = 0;
+
         // color palette
         this.purple = 0xff22dd;
         this.blue   = 0x2222ff;
         this.green  = 0x11dd00;
         this.orange = 0xff6600;
         this.black  = 0x111111; // almost black
-        this.white  = 0xffffff;
+        this.white  = 0xeeeeee; // almost white
 
         // horizontal scan line color
         this.purple_hscan = 52;
@@ -60,28 +63,56 @@ export class HiresDisplay
         this.black_vscan  = 100;
         this.white_vscan  = 100;
 
-        this.hlines = hlines || false;
-        this.vlines = vlines;
+        this._hscan = false;
+        this._vscan = true;
 
         this.reset();
     }
 
-    get hlines() { return this._hlines; }
-    set hlines(val) {
-        this._hlines = (val != 0);
+    get fore() {
+        return this._monochrome;
+    };
+    set fore(rgb) {
+        this._monochrome = rgb;
+        this.init_color_table();
+        this.refresh();
+    };
+
+    get back() {
+        return this.black;
+    };
+    set back(rgb) {
+        this.black = rgb;
+        this.init_color_table();
+        this.refresh();
+    };
+
+    get hscan() { return this._hscan; }
+    set hscan(val) {
+        this._hscan = (val != 0);
         this.refresh();
     }
 
-    get vlines() { return this._vlines; }
-    set vlines(val) {
-        this._vlines = (val != 0);
+    get vscan() { return this._vscan; }
+    set vscan(val) {
+        this._vscan = (val != 0);
         this.refresh();
     }
 
     get_color_fcn(rgb, hscan, vscan) {
-        const r = (rgb >> 16) & 0xff;
-        const g = (rgb >> 8) & 0xff;
-        const b = rgb & 0xff;
+        let r = (rgb >> 16) & 0xff;
+        let g = (rgb >> 8) & 0xff;
+        let b = rgb & 0xff;
+
+        if(this._monochrome > 0) {
+            const mr = (this._monochrome >> 16) & 0xff;
+            const mg = (this._monochrome >> 8) & 0xff;
+            const mb = this._monochrome & 0xff;
+            const bf = (0.34 * r + 0.5 * g + 0.16 * b) / 0xff;
+            r = Math.floor(bf * mr);
+            g = Math.floor(bf * mg);
+            b = Math.floor(bf * mb);
+        }
 
         const rhs = Math.floor((r * hscan) / 100);
         const ghs = Math.floor((g * hscan) / 100);
@@ -93,7 +124,7 @@ export class HiresDisplay
 
         return (data, oe, x) => {
             let draw = true;
-            if(this._hlines) {
+            if(this._hscan) {
                 data[x]   = data[x+4] = r;
                 data[x+1] = data[x+5] = g;
                 data[x+2] = data[x+6] = b;
@@ -104,7 +135,7 @@ export class HiresDisplay
                 draw = false;
             }
 
-            if(this._vlines && !oe) {
+            if(this._vscan && !oe) {
                 // vertical scan bar
                 data[x]   = data[x+4] = data[x+2256] = data[x+2260] = rvs;
                 data[x+1] = data[x+5] = data[x+2257] = data[x+2261] = gvs;

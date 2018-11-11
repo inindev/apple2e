@@ -197,35 +197,36 @@
       </div>
     </div>
     <div class="middle">
+
       <div class="buttons">
         <button id="run_stop">run</button>
         <button id="reset">reset</button>
         <input type="range" min="0" max="1" value="0.8" step="0.1">
       </div>
+
       <div class="drives">
         <div class="drive" id="drive1"><span>Drive 1</span><input type="file"><span class="led">&nbsp;</span></div>
         <div class="drive" id="drive2"><span>Drive 2</span><input type="file"><span class="led">&nbsp;</span></div>
       </div>
 
-        <div class="settings">
-          <div>
-            <button id="fullscreen">full screen</button>
-          </div>
-          <div>
-            <select id="color">
-              <option value="color">color</option>
-              <option value="green">green</option>
-              <option value="amber">amber</option>
-            </select>
-          </div>
-          <div>
-            <nobr><input type="checkbox" id="hscan"><label for="hscan"> horizontal scanlines</label></nobr>
-          </div>
-          <div>
-            <nobr><input type="checkbox" id="vscan"><label for="vscan"> vertical scanlines (hgr)</label></nobr>
-          </div>
+      <div class="settings">
+        <div>
+          <button id="fullscreen">full screen</button>
         </div>
-
+        <div>
+          <select id="color">
+            <option value="color">color</option>
+            <option value="green">green</option>
+            <option value="amber">amber</option>
+          </select>
+        </div>
+        <div>
+          <nobr><input type="checkbox" id="hscan"><label for="hscan"> horizontal scanlines</label></nobr>
+        </div>
+        <div>
+          <nobr><input type="checkbox" id="vscan"><label for="vscan"> vertical scanlines (hgr)</label></nobr>
+        </div>
+      </div>
 
     </div>
     <div class="doc">
@@ -293,24 +294,24 @@
     }
 
     function display_color(e) {
-        const rgb = {color:0xe0e0e0, green:0x00ff66, amber:0xffd429}[e.target.value];
-        motherboard.display_text.fore = rgb;
-        //motherboard.display_hires.fore = rgb;
-        //motherboard.display_double_hires.fore = rgb;
+        const rgb = {color:0, green:0x00ff66, amber:0xffd429}[e.target.value];
+        motherboard.display_text.fore = rgb==0 ? 0xeeeeee : rgb;
+        motherboard.display_hires.fore = rgb;
+        motherboard.display_double_hires.fore = rgb;
         localStorage.setItem("settings.color", e.target.value);
     }
 
     function display_hscan(e) {
-        motherboard.display_text.hlines = e.target.checked;
-        motherboard.display_hires.hlines = e.target.checked;
-        //motherboard.display_double_hires.hlines = e.target.checked;
+        motherboard.display_text.hscan = e.target.checked;
+        motherboard.display_hires.hscan = e.target.checked;
+        //motherboard.display_double_hires.hscan = e.target.checked;
         localStorage.setItem("settings.hscan", e.target.checked);
     }
 
     function display_vscan(e) {
-        //motherboard.display_text.vlines = e.target.checked;
-        motherboard.display_hires.vlines = e.target.checked;
-        //motherboard.display_double_hires.vlines = e.target.checked;
+        //motherboard.display_text.vscan = e.target.checked;
+        motherboard.display_hires.vscan = e.target.checked;
+        //motherboard.display_double_hires.vscan = e.target.checked;
         localStorage.setItem("settings.vscan", e.target.checked);
     }
 
@@ -467,6 +468,7 @@
         init();
     }
   </script>
+  <!--
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-40575180-2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -474,5 +476,6 @@
     gtag('js', new Date());
     gtag('config', 'UA-40575180-2');
   </script>
+  -->
 </body>
 </html>

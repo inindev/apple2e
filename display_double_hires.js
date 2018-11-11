@@ -36,17 +36,58 @@ export class DoubleHiresDisplay
         this._page1_init = false;
         this._page2_init = false;
 
+        // when set, this over-rides color
+        this._monochrome = 0;
+        this.mpal = [];
+
         // apple tech notes #63: master color values, p.326
         // https://www.apple.asimov.net/documentation/misc/Apple2TechNotes1993.pdf
-        this.pal = [
-            [0x00,0x00,0x00], [0xdd,0x00,0x33], [0x00,0x00,0x99], [0xdd,0x22,0xdd],
+        // modified to soften black & white
+        this.cpal = [
+            [0x11,0x11,0x11], [0xdd,0x00,0x33], [0x00,0x00,0x99], [0xdd,0x22,0xdd],
             [0x00,0x77,0x22], [0x55,0x55,0x55], [0x22,0x22,0xff], [0x66,0xaa,0xff],
             [0x88,0x55,0x00], [0xff,0x66,0x00], [0xaa,0xaa,0xaa], [0xff,0x99,0x88],
-            [0x11,0xdd,0x00], [0xff,0xff,0x00], [0x44,0xff,0x99], [0xff,0xff,0xff]
+            [0x11,0xdd,0x00], [0xff,0xff,0x00], [0x44,0xff,0x99], [0xee,0xee,0xee]
         ];
 
         this.reset();
     }
+
+    get fore() {
+        return this._monochrome;
+    };
+    set fore(rgb) {
+        this._monochrome = rgb;
+        if(rgb > 0) {
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >> 8) & 0xff;
+            const b = rgb & 0xff;
+            for(let i=0; i<16; i++) {
+                const bf = (0.34 * this.cpal[i][0] + 0.5 * this.cpal[i][1] + 0.16 * this.cpal[i][2]) / 0xff;
+                this.mpal[i] = [
+                    Math.floor(bf * r),
+                    Math.floor(bf * g),
+                    Math.floor(bf * b)
+                ];
+            }
+        }
+        this.refresh();
+    };
+
+    get back() {
+        return (this.pal[0][0] << 16) | (this.pal[0][1] << 8) | this.pal[0][2];
+    };
+    set back(rgb) {
+        this.mpal[0][0] = (rgb >> 16) & 0xff;
+        this.mpal[0][1] = (rgb >> 8) & 0xff;
+        this.mpal[0][2] = rgb & 0xff;
+
+        this.cpal[0][0] = (rgb >> 16) & 0xff;
+        this.cpal[0][1] = (rgb >> 8) & 0xff;
+        this.cpal[0][2] = rgb & 0xff;
+
+        this.refresh();
+    };
 
     draw(addr) {
         const ae = addr & 0xfffe; // even
@@ -73,6 +114,8 @@ export class DoubleHiresDisplay
     }
 
     draw_cell(id, row, col, b0, b1, b2, b3) {
+        const pal = (this._monochrome > 0) ? this.mpal : this.cpal;
+
         //         main     aux
         // 2000: xddccccb xbbbaaaa
         // 2001: xggggfff xfeeeedd
@@ -80,25 +123,25 @@ export class DoubleHiresDisplay
         const pca = [
             //         bbbaaaa.             ...xbbba
             // a           ^^^                     ^
-            this.pal[((b0 << 1) & 0x0e) | ((b0 >> 3) & 0x01)],
+            pal[((b0 << 1) & 0x0e) | ((b0 >> 3) & 0x01)],
             //         ...xbbba            xddccccb
             // b           ^^^                    ^
-            this.pal[((b0 >> 3) & 0x0e) | (b1 & 0x01)],
+            pal[((b0 >> 3) & 0x0e) | (b1 & 0x01)],
             //        xddccccb       ....xddc
             // c          ^^^               ^
-            this.pal[(b1 & 0x0e) | ((b1 >> 4) & 0x01)],
+            pal[(b1 & 0x0e) | ((b1 >> 4) & 0x01)],
             //         eeedd...             ....xddc             .xfeeeed
             // d           ^                     ^^                     ^
-            this.pal[((b2 << 3) & 0x08) | ((b1 >> 4) & 0x06) | ((b2 >> 1) & 0x01)],
+            pal[((b2 << 3) & 0x08) | ((b1 >> 4) & 0x06) | ((b2 >> 1) & 0x01)],
             //         .xfeeeed             .....xfe
             // e           ^^^                     ^
-            this.pal[((b2 >> 1) & 0x0e) | ((b2 >> 5) & 0x01)],
+            pal[((b2 >> 1) & 0x0e) | ((b2 >> 5) & 0x01)],
             //         gggfff..             .....xfe             ..xggggf
             // f           ^^                     ^                     ^
-            this.pal[((b3 << 2) & 0x0c) | ((b2 >> 5) & 0x02) | ((b3 >> 2) & 0x01)],
+            pal[((b3 << 2) & 0x0c) | ((b2 >> 5) & 0x02) | ((b3 >> 2) & 0x01)],
             //         ..xggggf             ......xg
             // g           ^^^                     ^
-            this.pal[((b3 >> 2) & 0x0e) | ((b3 >> 6) & 0x01)]
+            pal[((b3 >> 2) & 0x0e) | ((b3 >> 6) & 0x01)]
         ];
 
         // row: 0-191, col: 0-39

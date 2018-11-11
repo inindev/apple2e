@@ -12,7 +12,7 @@ import {rom_342_0265_a} from "./rom/342-0265-a.js";
 
 export class TextDisplay
 {
-    constructor(memory, canvas, hlines, fore, back) {
+    constructor(memory, canvas) {
         this._font_rom = rom_342_0265_a;
         this._mem = memory;
 
@@ -29,10 +29,10 @@ export class TextDisplay
         this._page1_init = false;
         this._page2_init = false;
 
-        this.hlines = hlines;
+        this._hscan = true;
 
-        this.fore = fore || 0x00ff66; // green
-        this.back = back || 0x111111; // almost black
+        this._fore = 0x00ff66; // green
+        this._back = 0x111111; // almost black
 
         this.reset();
     }
@@ -44,9 +44,9 @@ export class TextDisplay
         this._fr = (rgb >> 16) & 0xff;
         this._fg = (rgb >> 8) & 0xff;
         this._fb = rgb & 0xff;
-        this._frl = this._hlines ? this._fr>>1 : this._fr;
-        this._fgl = this._hlines ? this._fg>>1 : this._fg;
-        this._fbl = this._hlines ? this._fb>>1 : this._fb;
+        this._frl = this._hscan ? this._fr>>1 : this._fr;
+        this._fgl = this._hscan ? this._fg>>1 : this._fg;
+        this._fbl = this._hscan ? this._fb>>1 : this._fb;
         this.refresh();
     };
 
@@ -60,14 +60,14 @@ export class TextDisplay
         this.refresh();
     };
 
-    get hlines() {
-        return this._hlines;
+    get hscan() {
+        return this._hscan;
     };
-    set hlines(val) {
-        this._hlines = (val != 0);
-        this._frl = this._hlines ? this._fr>>1 : this._fr;
-        this._fgl = this._hlines ? this._fg>>1 : this._fg;
-        this._fbl = this._hlines ? this._fb>>1 : this._fb;
+    set hscan(val) {
+        this._hscan = (val != 0);
+        this._frl = this._hscan ? this._fr>>1 : this._fr;
+        this._fgl = this._hscan ? this._fg>>1 : this._fg;
+        this._fbl = this._hscan ? this._fb>>1 : this._fb;
         this.refresh();
     };
 
