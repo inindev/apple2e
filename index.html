@@ -168,10 +168,10 @@
     div.settings>div {
         margin:6px;
     }
-    select#color {
-        width:8em;
+    div.color>select {
         border:1px solid #afaf83;
         border-radius:2px;
+        width:12em;
     }
     div.doc {
         margin:20px 0 0 200px;
@@ -213,15 +213,22 @@
         <div>
           <button id="fullscreen">full screen</button>
         </div>
-        <div>
-          <select id="color">
-            <option value="color">color</option>
-            <option value="green">green</option>
-            <option value="amber">amber</option>
+        <div class="color">
+          <select id="tcolor">
+            <option value="tg">green text</option>
+            <option value="ta">amber text</option>
+            <option value="tw">white text</option>
+          </select>
+        </div>
+        <div class="color">
+          <select id="gcolor">
+            <option value="gc">color graphics</option>
+            <option value="gg">green graphics</option>
+            <option value="ga">amber graphics</option>
           </select>
         </div>
         <div>
-          <nobr><input type="checkbox" id="hscan"><label for="hscan"> horizontal scanlines</label></nobr>
+          <nobr><input type="checkbox" id="hscan"><label for="hscan"> horizontal scanlines (text)</label></nobr>
         </div>
         <div>
           <nobr><input type="checkbox" id="vscan"><label for="vscan"> vertical scanlines (hgr)</label></nobr>
@@ -294,24 +301,26 @@
     }
 
     function display_color(e) {
-        const rgb = {color:0, green:0x00ff66, amber:0xffd429}[e.target.value];
-        motherboard.display_text.fore = rgb==0 ? 0xeeeeee : rgb;
-        motherboard.display_hires.fore = rgb;
-        motherboard.display_double_hires.fore = rgb;
-        localStorage.setItem("settings.color", e.target.value);
+        const val = e.target.value;
+        if(val[0] == 't') {
+            const rgb = {tg:0x00ff66, ta:0xffd429, tw:0xeeeeee}[val];
+            motherboard.display_text.fore = rgb;
+            localStorage.setItem("settings.tcolor", val);
+        } else {
+            const rgb = {gc:0, gg:0x00ff66, ga:0xffd429}[val];
+            motherboard.display_hires.fore = rgb;
+            motherboard.display_double_hires.fore = rgb;
+            localStorage.setItem("settings.gcolor", val);
+        }
     }
 
     function display_hscan(e) {
         motherboard.display_text.hscan = e.target.checked;
-        motherboard.display_hires.hscan = e.target.checked;
-        //motherboard.display_double_hires.hscan = e.target.checked;
         localStorage.setItem("settings.hscan", e.target.checked);
     }
 
     function display_vscan(e) {
-        //motherboard.display_text.vscan = e.target.checked;
         motherboard.display_hires.vscan = e.target.checked;
-        //motherboard.display_double_hires.vscan = e.target.checked;
         localStorage.setItem("settings.vscan", e.target.checked);
     }
 
@@ -412,10 +421,14 @@
         document.addEventListener('keyup', key_up);
 
         document.getElementById("fullscreen").addEventListener("click", display_fullscreen);
-        const color = document.getElementById("color");
-        color.addEventListener("change", display_color);
-        color.value = localStorage.getItem("settings.color") || "green";
-        color.dispatchEvent(new Event('change'));
+        const tcolor = document.getElementById("tcolor");
+        const gcolor = document.getElementById("gcolor");
+        tcolor.addEventListener("change", display_color);
+        gcolor.addEventListener("change", display_color);
+        tcolor.value = localStorage.getItem("settings.tcolor") || "tg";
+        gcolor.value = localStorage.getItem("settings.gcolor") || "gc";
+        tcolor.dispatchEvent(new Event('change'));
+        gcolor.dispatchEvent(new Event('change'));
 
         const hscan = document.getElementById("hscan");
         hscan.addEventListener("change", display_hscan);
@@ -468,7 +481,6 @@
         init();
     }
   </script>
-  <!--
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-40575180-2"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -476,6 +488,5 @@
     gtag('js', new Date());
     gtag('config', 'UA-40575180-2');
   </script>
-  -->
 </body>
 </html>
