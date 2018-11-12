@@ -382,6 +382,8 @@
         load_disk_url(url, name) {
             name = name || url.substring(url.lastIndexOf('/') + 1);
 
+            if(this.url_path.value != url) this.url_path.value = url;
+
             const xhr = new XMLHttpRequest();
             xhr.open("GET", url);
             xhr.responseType = "arraybuffer";
