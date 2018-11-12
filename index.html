@@ -15,7 +15,7 @@
         -moz-user-select:none;
         font-size:13px;
         font-family:sans-serif;
-        background:#e1e1d0;
+        background:#e1e1d1;
     }
     div.top {
         display:flex;
@@ -129,52 +129,100 @@
         border:0.2px solid #111;
     }
     div.drives {
-        margin:0 0 0 200px;
-        min-width:32.5em;
+        margin:0 0 0 220px;
         display:inline-block;
+        vertical-align:bottom;
     }
     div.drive {
-        margin:10px;
-        padding:10px;
+        margin:12px 12px 1px 12px;
+    }
+    div.drive button {
+        padding:4px 12px 4px 12px;
+        background:#eee;
+        border:1px solid #aaa;
+        border-radius:5px;
+    }
+    div.drive>details {
         border:1px solid #734d26;
+        display:inline-block;
+        xbackground:#d2d1c1;
     }
-    div.drive>input {
-        height:2em;
-        font-size:12px;
-        font-family:sans-serif;
+    div.drive>details>summary {
+        padding:20px;
+        min-width:26em;
     }
-    div.drive>span {
-        margin:0 20px 0 20px;
+    div.drive>details>summary>span:nth-child(1) {
+        margin-right:16px;
+    }
+    div.drive>details>div {
+        margin:0 18px 14px 18px;
+        width:36em;
+    }
+    div.drive>details>div>div {
+        display:flex;
+        align-items:center;
+        margin-bottom:8px;
+    }
+    div.drive>details>div span {
+        width:1.8em;
+    }
+    div.drive>details>div input {
+        flex:1;
+    }
+    div.drive>details>div button {
+        margin-left:6px;
+        width:6.2em;
+    }
+    input[readonly] {
+        background:#eee;
     }
     span.led {
+        float:right;
         padding:4px 7px 4px 7px;
         border-radius:8px;
         font-size:5px;
         vertical-align:middle;
         color:#734d26;
-        background:#ccc;
+        box-shadow:0 0 4px #999;
+        background:#d0d0d0;
     }
     span.led.on {
         color:#e1e1d0;
-        box-shadow:0 0 6px #d48;
+        box-shadow:0 0 6px #d44;
         background:radial-gradient(#d00, #900);
+    }
+    input[type=file] {
+        font-size:20px;
+        position:absolute;
+        left:0;
+        top:0;
+        opacity:0;
     }
     div.settings {
         margin:0 0 0 18px;
         padding:6px;
         border:2px groove #cfcfa3;
         display:inline-block;
+        vertical-align:bottom;
     }
     div.settings>div {
         margin:6px;
     }
+    div.settings button {
+        padding:4px;
+        background:#eee;
+        border:1px solid #aaa;
+        border-radius:5px;
+    }
     div.color>select {
-        border:1px solid #afaf83;
-        border-radius:2px;
+        padding:3px;
+        background:#eee;
+        border:1px solid #aaa;
+        border-radius:5px;
         width:12em;
     }
     div.doc {
-        margin:20px 0 0 200px;
+        margin:20px 0 0 250px;
         display:flex;
     }
     div.doc>div {
@@ -201,12 +249,36 @@
       <div class="buttons">
         <button id="run_stop">run</button>
         <button id="reset">reset</button>
-        <input type="range" min="0" max="1" value="0.8" step="0.1">
+        <input type="range" min="0" max="1" value="0.6" step="0.1">
       </div>
 
       <div class="drives">
-        <div class="drive" id="drive1"><span>Drive 1</span><input type="file"><span class="led">&nbsp;</span></div>
-        <div class="drive" id="drive2"><span>Drive 2</span><input type="file"><span class="led">&nbsp;</span></div>
+        <div class="drive">
+          <details>
+            <summary>
+              <span>drive 1</span>
+              <span id="drivetitle1">&nbsp;&nbsp;&nbsp;&nbsp;&lt;click to set drive 1 source&gt;</span>
+              <span class="led" id="led1">&nbsp;</span>
+            </summary>
+            <div>
+              <div><span>file</span>&nbsp;<input id="file1" type="text" readonly>&nbsp;<div style="position:relative"><button>browse...</button><input type="file" id="filedialog1"></div></div>
+              <div><span>url</span>&nbsp;<input id="url1" type="text">&nbsp;<button id="saveurl1" disabled>save...</button></div>
+            </div>
+          </details>
+        </div>
+        <div class="drive">
+          <details>
+            <summary>
+              <span>drive 2</span>
+              <span id="drivetitle2">&nbsp;&nbsp;&nbsp;&nbsp;&lt;click to set drive 2 source&gt;</span>
+              <span class="led" id="led2">&nbsp;</span>
+            </summary>
+            <div>
+              <div><span>file</span>&nbsp;<input id="file2" type="text" readonly>&nbsp;<div style="position:relative"><button>browse...</button><input type="file" id="filedialog2"></div></div>
+              <div><span>url</span>&nbsp;<input id="url2" type="text">&nbsp;<button id="saveurl2" disabled>save...</button></div>
+            </div>
+          </details>
+        </div>
       </div>
 
       <div class="settings">
@@ -228,10 +300,10 @@
           </select>
         </div>
         <div>
-          <nobr><input type="checkbox" id="hscan"><label for="hscan"> horizontal scanlines (text)</label></nobr>
+          <input type="checkbox" id="hscan"><label for="hscan"> horizontal scanlines (text)</label>
         </div>
         <div>
-          <nobr><input type="checkbox" id="vscan"><label for="vscan"> vertical scanlines (hgr)</label></nobr>
+          <input type="checkbox" id="vscan"><label for="vscan"> vertical scanlines (hgr)</label>
         </div>
       </div>
 
@@ -253,16 +325,109 @@
   <script type="module">
     import {Motherboard} from "./motherboard.js";
 
+    class Drive
+    {
+        constructor(num, display, led, dialog, file_path, url_path, save_url) {
+            this.num = num;
+
+            this.display = document.getElementById(display);
+            this.led = document.getElementById(led);
+            this.dialog = document.getElementById(dialog);
+            this.file_path = document.getElementById(file_path);
+            this.url_path = document.getElementById(url_path);
+            this.save_url = document.getElementById(save_url);
+
+            this.dialog.addEventListener('change', this.on_file_select.bind(this));
+            this.url_path.addEventListener('change', this.on_url_change.bind(this));
+            this.save_url.addEventListener('click', this.on_save.bind(this));
+
+            this.file_path.value = "";
+            this.url_path.value = "";
+        }
+
+        on_file_select(e) {
+            this.display.innerText = "";
+            this.file_path.value = "";
+            this.url_path.value = "";
+
+            const file = e.target.files[0];
+            if(file.size != 143360) {
+                alert("file must be a 140k .dsk file");
+                return;
+            }
+
+            const path = this.dialog.value;
+            const name = path.substring(path.lastIndexOf('\\') + 1);
+            this.file_path.value = path;
+            this.display.innerText = name;
+
+            const fr = new FileReader();
+            fr.onload = () => {
+                motherboard.floppy525.load_disk(this.num, name, fr.result);
+            };
+            fr.readAsArrayBuffer(file);
+
+            e.target.parentNode.parentNode.parentNode.parentNode.removeAttribute("open");
+        }
+
+        on_url_change(e) {
+            this.display.innerText = "";
+            this.file_path.value = "";
+
+            const url = e.target.value;
+            if(url) this.load_disk_url(url);
+            e.target.parentNode.parentNode.parentNode.removeAttribute("open");
+        }
+
+        load_disk_url(url, name) {
+            name = name || url.substring(url.lastIndexOf('/') + 1);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", url);
+            xhr.responseType = "arraybuffer";
+            xhr.onload = () => {
+                if(xhr.status != 200) {
+                    console.log("failed to load " + url + "  status: " + xhr.status);
+                    return;
+                }
+
+                const rc = motherboard.floppy525.load_disk(this.num, name, xhr.response);
+                if(rc) {
+                    this.display.innerText = name;
+                    console.log("disk " + (this.num+1) + " loaded: " + url);
+                }
+            };
+            xhr.send();
+        }
+
+        on_save(e) {
+            // TODO
+            console.log("on_save: " + this.num);
+        }
+
+        set_led(state) {
+            this.led.className= state ? "led on" : "led";
+        }
+    }
+
+    const drives = [
+        new Drive(0, "drivetitle1", "led1", "filedialog1", "file1", "url1", "saveurl1"),
+        new Drive(1, "drivetitle2", "led2", "filedialog2", "file2", "url2", "saveurl2")
+    ];
+
+    ////////////////////////////////////////////////////////////
+
     // Understanding the Apple II, p.3-3
     // composite freq: 1020.5kHz
     const khz = 1020.5;
     let motherboard;
+    let body;
     let canvas;
+    let canvas_input;
     let run_stop_btn;
     let interval;
     let last_ms;
     let mouse_offs = 0;
-
 
     function stop() {
         run_stop_btn.innerText = "run";
@@ -324,38 +489,6 @@
         localStorage.setItem("settings.vscan", e.target.checked);
     }
 
-    function file_select(e, num) {
-        const file = e.target.files[0];
-        if(file.size != 143360) {
-            e.target.value = "";
-            alert("file must be a 140k .dsk file");
-            return;
-        }
-        const fr = new FileReader();
-        fr.onload = () => {
-            motherboard.floppy525.load_disk(num, file.name, fr.result);
-        };
-        fr.readAsArrayBuffer(file);
-    }
-
-    function load_disk(num, name, url) {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url);
-        xhr.responseType = "arraybuffer";
-        xhr.onload = () => {
-            if(xhr.status != 200) {
-                console.log("failed to load " + url + "  status: " + xhr.status);
-                return;
-            }
-            const bin = xhr.response;
-            const rc = motherboard.floppy525.load_disk(num, name, bin);
-            if(rc) {
-                console.log("disk " + (num+1) + " loaded: " + url);
-            }
-        };
-        xhr.send();
-    }
-
     function parse_params() {
         let params = [];
         const tokens = window.location.search.substr(1).split("&");
@@ -366,23 +499,25 @@
 
         const u2 = params["u2"];
         const n2 = params["n2"];
-        if(u2) load_disk(1, n2, u2);
+        if(u2) drives[1].load_disk_url(u2, n2);
 
         const u1 = params["u1"];
         const n1 = params["n1"];
         if(u1) {
-            load_disk(0, n1, u1);
+            drives[0].load_disk_url(u1, n1);
             run();
         }
     }
 
     function key_down(e) {
         if(e.keyCode == 0) return;
+        if((e.target != canvas_input) && (e.target != body)) return;
         if(!e.metaKey) e.preventDefault();
         motherboard.keyboard.key_down(e.keyCode, e.shiftKey, e.ctrlKey, e.metaKey);
     }
     function key_down_trans(e) {
         if(e.keyCode == 0) return;
+        if((e.target != canvas_input) && (e.target != body)) return;
         if(!e.metaKey) e.preventDefault();
         const code = {0xba:0x3b, 0xbb:0x3d, 0xbd:0xad}[e.keyCode] || e.keyCode; // ; = -
         motherboard.keyboard.key_down(code, e.shiftKey, e.ctrlKey, e.metaKey);
@@ -391,8 +526,9 @@
         if(e.keyCode == 0) { // helpful for some mobile browsers
             const code = e.target.value.charCodeAt();
             motherboard.keyboard.key_down(code, false, false, false);
+            e.target.value = "";
         }
-        e.target.value = "";
+        if((e.target != canvas_input) && (e.target != body)) return;
         motherboard.keyboard.key_up();
     }
 
@@ -404,18 +540,11 @@
         window.dispatchEvent(new Event('resize'));
 
         canvas = document.querySelector("div.display>div>canvas");
-
-        const drive_leds = document.querySelectorAll("span.led");
-        motherboard = new Motherboard(khz, canvas, (n,s)=>{drive_leds[n].className=s?"led on":"led"});
+        motherboard = new Motherboard(khz, canvas, (n,s)=>{drives[n].set_led(s)});
         motherboard.reset();
 
-        const drive1 = document.getElementById("drive1");
-        drive1.addEventListener('change', (e)=>{file_select(e, 0)});
-        if(drive1.value) drive1.dispatchEvent(new Event('change'));
-        const drive2 = document.getElementById("drive2");
-        drive2.addEventListener('change', (e)=>{file_select(e, 1)});
-        if(drive2.value) drive2.dispatchEvent(new Event('change'));
-
+        body = document.querySelector("body");
+        canvas_input = document.querySelector("input[type=password]");
         const ff = navigator.userAgent.toLowerCase().indexOf('firefox') > 0;
         document.addEventListener('keydown', ff?key_down:key_down_trans);
         document.addEventListener('keyup', key_up);

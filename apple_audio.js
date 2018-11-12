@@ -20,7 +20,7 @@ export class AppleAudio
         this.seg_time = 0;
         this.seg_clock = 0;
         this.state = false;
-        this.level = 0.8;
+        this.level = 0.6;
     }
 
     init() {
