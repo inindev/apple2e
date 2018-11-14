@@ -262,7 +262,7 @@
             </summary>
             <div>
               <div><span>file</span>&nbsp;<input id="file1" type="text" readonly>&nbsp;<div style="position:relative"><button>browse...</button><input type="file" id="filedialog1"></div></div>
-              <div><span>url</span>&nbsp;<input id="url1" type="text">&nbsp;<button id="saveurl1" disabled>save...</button></div>
+              <div><span>url</span>&nbsp;<input id="url1" type="text">&nbsp;<button id="saveurl1">save...</button></div>
             </div>
           </details>
         </div>
@@ -275,7 +275,7 @@
             </summary>
             <div>
               <div><span>file</span>&nbsp;<input id="file2" type="text" readonly>&nbsp;<div style="position:relative"><button>browse...</button><input type="file" id="filedialog2"></div></div>
-              <div><span>url</span>&nbsp;<input id="url2" type="text">&nbsp;<button id="saveurl2" disabled>save...</button></div>
+              <div><span>url</span>&nbsp;<input id="url2" type="text">&nbsp;<button id="saveurl2">save...</button></div>
             </div>
           </details>
         </div>
@@ -403,8 +403,20 @@
         }
 
         on_save(e) {
-            // TODO
-            console.log("on_save: " + this.num);
+            if(!this.url_path.value) return;
+
+            const url = this.url_path.value;
+            const name = this.display.innerText || url.substring(url.lastIndexOf('/') + 1);
+
+            const a = document.createElement('a');
+            document.body.appendChild(a);
+            a.href = url;
+            a.download = name;
+            a.click();
+            setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            }, 0)
         }
 
         set_led(state) {
