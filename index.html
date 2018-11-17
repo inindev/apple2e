@@ -224,6 +224,16 @@
         border-radius:5px;
         width:12em;
     }
+    div.gamepad {
+        width:37;
+        height:24;
+        float:right;
+        background-image:url("gamepad.png");
+    }
+    div.gamepad.off {
+        opacity:0.2;
+        filter:grayscale(100%);
+    }
     div.doc {
         margin:20px 0 0 250px;
         display:flex;
@@ -287,6 +297,7 @@
       <div class="settings">
         <div>
           <button id="fullscreen">full screen</button>
+          <div class="gamepad off"></div>
         </div>
         <div class="color">
           <select id="tcolor">
@@ -441,6 +452,8 @@
     let body;
     let canvas;
     let canvas_input;
+    let gamepad;
+    let gamepad_ico;
     let run_stop_btn;
     let interval;
     let last_ms;
@@ -506,6 +519,16 @@
         localStorage.setItem("settings.vscan", e.target.checked);
     }
 
+    function gamepad_connect(e) {
+        if(e.type === "gamepaddisconnected") {
+            gamepad = undefined;
+            gamepad_ico.className= "gamepad off";
+        } else {
+            gamepad = e.gamepad;
+            gamepad_ico.className= "gamepad";
+        }
+    }
+
     function parse_params() {
         let params = [];
         const tokens = window.location.search.substr(1).split("&");
@@ -565,6 +588,10 @@
         const ff = navigator.userAgent.toLowerCase().indexOf('firefox') > 0;
         document.addEventListener('keydown', ff?key_down:key_down_trans);
         document.addEventListener('keyup', key_up);
+
+        gamepad_ico = document.querySelector("div.gamepad");
+        window.addEventListener("gamepadconnected", gamepad_connect);
+        window.addEventListener("gamepaddisconnected", gamepad_connect);
 
         document.getElementById("fullscreen").addEventListener("click", display_fullscreen);
         const tcolor = document.getElementById("tcolor");
