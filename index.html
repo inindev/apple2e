@@ -86,11 +86,14 @@
         background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #86592d), color-stop(1, #734d26));
         background:-moz-linear-gradient(center top, #86592d 5%, #734d26 100%);
     }
-    div.buttons>input {
+    div.buttons>div {
         margin-left:200px;
+        display:inline-flex;
+        align-items:center
     }
     input[type=range] {
         -webkit-appearance:none;
+        margin-left:8px;
     }
     input[type=range]::-webkit-slider-thumb {
         -webkit-appearance:none;
@@ -249,7 +252,7 @@
       <div class="buttons">
         <button id="run_stop">run</button>
         <button id="reset">reset</button>
-        <input type="range" min="0" max="1" value="0.6" step="0.1">
+        <div><img src="sound.png"><input type="range" min="0" max="1" value="0.6" step="0.1"></div>
       </div>
 
       <div class="drives">
@@ -352,7 +355,7 @@
 
             const file = e.target.files[0];
             if(file.size != 143360) {
-                alert("file must be a 140k .dsk file");
+                alert("file must be a 140k .dsk, .do, or .po file");
                 return;
             }
 
@@ -586,7 +589,7 @@
         run_stop_btn = document.getElementById("run_stop");
         run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
         document.getElementById("reset").addEventListener("click", reset);
-        document.querySelector("div.buttons>input").addEventListener("change", (e)=>{motherboard.audio.level=e.target.value});
+        document.querySelector("div.buttons>div>input").addEventListener("change", (e)=>{motherboard.audio.level=e.target.value});
 
         parse_params();
 
