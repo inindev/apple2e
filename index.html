@@ -452,8 +452,7 @@
     let body;
     let canvas;
     let canvas_input;
-    let gamepad;
-    let gamepad_ico;
+    let gamepad_elem;
     let run_stop_btn;
     let interval;
     let last_ms;
@@ -519,13 +518,15 @@
         localStorage.setItem("settings.vscan", e.target.checked);
     }
 
-    function gamepad_connect(e) {
+    function gamepad_connection(e) {
         if(e.type === "gamepaddisconnected") {
-            gamepad = undefined;
-            gamepad_ico.className= "gamepad off";
+            if(motherboard.joystick.gamepad == e.gamepad) {
+                motherboard.joystick.gamepad = undefined;
+                gamepad_elem.className= "gamepad off";
+            }
         } else {
-            gamepad = e.gamepad;
-            gamepad_ico.className= "gamepad";
+            motherboard.joystick.gamepad = e.gamepad;
+            gamepad_elem.className= "gamepad";
         }
     }
 
@@ -589,9 +590,9 @@
         document.addEventListener('keydown', ff?key_down:key_down_trans);
         document.addEventListener('keyup', key_up);
 
-        gamepad_ico = document.querySelector("div.gamepad");
-        window.addEventListener("gamepadconnected", gamepad_connect);
-        window.addEventListener("gamepaddisconnected", gamepad_connect);
+        gamepad_elem = document.querySelector("div.gamepad");
+        window.addEventListener("gamepadconnected", gamepad_connection);
+        window.addEventListener("gamepaddisconnected", gamepad_connection);
 
         document.getElementById("fullscreen").addEventListener("click", display_fullscreen);
         const tcolor = document.getElementById("tcolor");

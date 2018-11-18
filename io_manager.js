@@ -63,13 +63,14 @@
 
 export class IOManager
 {
-    constructor(memory, keyboard, display_text, display_hires, display_double_hires, audio_cb) {
+    constructor(memory, keyboard, display_text, display_hires, display_double_hires, audio_cb, joystick) {
         this._mem = memory;
         this._kbd = keyboard;
         this._display_text = display_text;
         this._display_hires = display_hires;
         this._display_double_hires = display_double_hires;
         this._audio_cb = audio_cb;
+        this._joystick = joystick;
 
         this._c3_rom = false;
         this._c8_rom = false;
@@ -138,6 +139,22 @@ export class IOManager
                     return this._altchar_mode ? 0x80 : 0;
                 case 0xc01f: // 80 col mode (0: 40 cols, 0x80: 80 cols)
                     return this._80col_mode ? 0x80 : 0;
+                case 0xc061: // js pb0
+                    return this._joystick.button0 ? 0x80 : 0;
+                case 0xc062: // js pb1
+                    return this._joystick.button1 ? 0x80 : 0;
+                case 0xc063: // js pb2
+                    return this._joystick.button2 ? 0x80 : 0;
+                case 0xc064: // js pdl-0
+                    return this._joystick.axis0;
+                case 0xc065: // js pdl-1
+                    return this._joystick.axis1;
+                case 0xc066: // js pdl-2
+                    return this._joystick.axis2;
+                case 0xc067: // js pdl-3
+                    return this._joystick.axis3;
+                case 0xc070: // trigger paddle read
+                    return 0;
                 case 0xc07e: // iou disable (0: iou is enabled, 0x80: iou is disabled)
                     //console.log("iou disable: " + this._iou_disable);
                     return this._iou_disable ? 0x80 : 0;

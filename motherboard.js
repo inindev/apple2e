@@ -18,6 +18,7 @@ import {DoubleHiresDisplay} from "./display_double_hires.js";
 import {Keyboard} from "./keyboard.js";
 import {Floppy525} from "./floppy525.js";
 import {AppleAudio} from "./apple_audio.js";
+import {Joystick} from "./joystick.js";
 import {rom_342_0304_cd} from "./rom/342-0304-cd.js";
 import {rom_342_0303_ef} from "./rom/342-0303-ef.js";
 
@@ -33,7 +34,10 @@ export class Motherboard
         this.display_double_hires = new DoubleHiresDisplay(this.memory, canvas);
         this.floppy525 = new Floppy525(6, this.memory, floppy_led_cb);
         this.audio = new AppleAudio(khz);
-        this.io_manager = new IOManager(this.memory, this.keyboard, this.display_text, this.display_hires, this.display_double_hires, this.audio_click.bind(this));
+        this.joystick = new Joystick();
+        this.io_manager = new IOManager(this.memory, this.keyboard,
+                                        this.display_text, this.display_hires, this.display_double_hires,
+                                        this.audio_click.bind(this), this.joystick);
 
         this.cycles = 0;
     }
