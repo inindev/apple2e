@@ -3,7 +3,10 @@ Apple IIe Computer written in ES6
 
 &nbsp;
 
-Virtual Apple IIe <a target="_blank" href="https://inindev.github.io/apple2e/index.html">demo</a>
+Virtual Apple IIe
+ - <a target="_blank" href="https://inindev.github.io/apple2e/index.html?u1=https://s3.us-east-2.amazonaws.com/apple2e/ProDOS_2_4_2.dsk">Pro DOS 2.4.2</a>
+ - <a target="_blank" href="https://inindev.github.io/apple2e/index.html?u1=https://s3.us-east-2.amazonaws.com/apple2e/lode_runner.dsk">Lode Runner</a>
+ - <a target="_blank" href="https://inindev.github.io/apple2e/index.html?u1=https://s3.us-east-2.amazonaws.com/apple2e/bad_dudes.dsk">Bad Dudes</a>
 
 &nbsp;
 
