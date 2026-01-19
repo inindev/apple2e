@@ -662,9 +662,10 @@ export class W65C02S
 
     //                                            n v b d i z c
     // PHP   proc status -> push stack            - - - - - - -
+    //       (pushes with b flag set)
     //
     php(memfn) {
-        this.stack_push_byte(this.reg.flag.value);
+        this.stack_push_byte(this.reg.flag.value | 0x10); // set b
         return memfn.cycles;
     }
 
