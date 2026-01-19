@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W65C02S Test Harness</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>W65C02S Emulator Test Harness</h1>
+
+        <div class="info-box">
+            <h3>Klaus Dormann Test Suite</h3>
+            <p>
+                Comprehensive 6502/65C02 functional test binaries from
+                <a href="https://github.com/Klaus2m5/6502_65C02_functional_tests" target="_blank">Klaus2m5 on GitHub</a>
+            </p>
+            <div style="margin-top: 12px; margin-left: 20px;">
+                <div style="margin-bottom: 6px;">
+                    <a href="https://github.com/Klaus2m5/6502_65C02_functional_tests/raw/refs/heads/master/bin_files/6502_functional_test.bin"
+                       target="_blank"
+                       style="font-family: monospace; text-decoration: none;">⬇ 6502_functional_test.bin</a>
+                </div>
+                <div>
+                    <a href="https://github.com/Klaus2m5/6502_65C02_functional_tests/raw/refs/heads/master/bin_files/65C02_extended_opcodes_test.bin"
+                       target="_blank"
+                       style="font-family: monospace; text-decoration: none;">⬇ 65C02_extended_opcodes_test.bin</a>
+                </div>
+            </div>
+            <p style="margin-top: 12px; font-size: 0.9em; color: #666;">
+                Download a binary, then use "Load Binary" below to test the emulator.
+            </p>
+        </div>
+
+        <div class="config-section">
+            <h3>Configuration</h3>
+            <div class="config-grid">
+                <div class="config-item">
+                    <label for="loadAddr">Load Address:</label>
+                    <input type="text" id="loadAddr" value="0000" maxlength="4">
+                </div>
+                <div class="config-item">
+                    <label for="startAddr">Start Address:</label>
+                    <input type="text" id="startAddr" value="0400" maxlength="4">
+                </div>
+                <div class="config-item">
+                    <label for="successAddr">Success Address:</label>
+                    <input type="text" id="successAddr" value="3469" maxlength="4">
+                </div>
+                <div class="config-item">
+                    <label for="maxCycles">Max Cycles:</label>
+                    <input type="text" id="maxCycles" value="100000000">
+                </div>
+                <div class="config-item">
+                    <label for="breakpoint">Breakpoint:</label>
+                    <input type="text" id="breakpoint" placeholder="e.g. 0x09D7">
+                </div>
+            </div>
+        </div>
+        <div class="config-section">
+            <h3>Memory Tools</h3>
+            <div class="tool-grid">
+                <!-- peek row -->
+                <div class="config-item">
+                    <label for="peekAddr">Peek Address:</label>
+                    <input type="text" id="peekAddr" placeholder="e.g. 0x0100">
+                </div>
+                <div class="config-item">
+                    <label for="peekLen">length:</label>
+                    <input type="text" id="peekLen" value="16" placeholder="bytes">
+                </div>
+                <div class="config-item">
+                    <button id="peekBtn" class="btn">Peek</button>
+                </div>
+
+                <!-- poke row -->
+                <div class="config-item">
+                    <label for="pokeAddr">Poke Address:</label>
+                    <input type="text" id="pokeAddr" placeholder="e.g. 0x0100">
+                </div>
+                <div class="config-item">
+                    <label for="pokeVal">Value (byte):</label>
+                    <input type="text" id="pokeVal" placeholder="e.g. 0xFF">
+                </div>
+                <div class="config-item">
+                    <button id="pokeBtn" class="btn">Poke</button>
+                </div>
+            </div>
+            <div id="memoryOutput" class="memory-output" style="margin-top: 10px; font-family: monospace;"></div>
+        </div>
+
+        <div class="controls">
+            <input type="file" id="fileInput" accept=".bin,.65b" style="display: none;">
+            <button id="loadBtn" class="btn btn-primary">Load Binary</button>
+            <button id="runBtn" class="btn btn-success" disabled>Run Test</button>
+            <button id="stopBtn" class="btn btn-danger" disabled>Stop</button>
+        </div>
+
+        <div id="status" class="status info">Ready to load test binary</div>
+        <div id="progress" class="progress"></div>
+        <div id="results" class="results"></div>
+    </div>
+
+    <script type="module" src="test_ui.js"></script>
+</body>
+
+</html>
