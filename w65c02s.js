@@ -418,8 +418,11 @@ export class W65C02S
     //
     brk(memfn) {
         this.reg.flag.b = true;
+        this.stack_push_word(this.reg.pc + 1);       // push pc+2 (return address)
+        this.stack_push_byte(this.reg.flag.value);   // push status
         this.reg.flag.d = false;
         this.reg.flag.i = true;
+        this.reg.pc = this.mem.read_word(0xfffe);    // jump to irq vector
         return memfn.cycles;
     }
 
