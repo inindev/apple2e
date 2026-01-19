@@ -1,10 +1,5 @@
 #!/bin/sh
 
-PORT=8000
-
-if command -v python3 &>/dev/null; then
-    python3 -m http.server ${1:-$PORT}
-else
-    python -m SimpleHTTPServer ${1:-$PORT}
-fi
-
+PORT="${1:-8000}"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+python3 -m http.server "$PORT" --directory "$SCRIPT_DIR" --bind 0.0.0.0
