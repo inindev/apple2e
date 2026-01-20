@@ -1234,7 +1234,8 @@ export class W65C02S
             }
         }
 
-        // illegal opcodes (nop)
+        // illegal opcodes (nop) - wdc 65c02 undefined opcodes behave as nops
+        // 2-byte nops (opcode + 1 byte operand)
         this.op[0x02] = () => { this.reg.pc++; return 2; };
         this.op[0x22] = () => { this.reg.pc++; return 2; };
         this.op[0x42] = () => { this.reg.pc++; return 2; };
@@ -1246,9 +1247,41 @@ export class W65C02S
         this.op[0x54] = () => { this.reg.pc++; return 4; };
         this.op[0xd4] = () => { this.reg.pc++; return 4; };
         this.op[0xf4] = () => { this.reg.pc++; return 4; };
+        // 3-byte nops (opcode + 2 byte operand)
         this.op[0xdc] = () => { this.reg.pc+=2; return 4; };
         this.op[0xfc] = () => { this.reg.pc+=2; return 4; };
         this.op[0x5c] = () => { this.reg.pc+=2; return 8; };
+        // 1-byte nops (all $x3 and $xb opcodes not otherwise defined)
+        this.op[0x03] = () => { return 1; };
+        this.op[0x13] = () => { return 1; };
+        this.op[0x23] = () => { return 1; };
+        this.op[0x33] = () => { return 1; };
+        this.op[0x43] = () => { return 1; };
+        this.op[0x53] = () => { return 1; };
+        this.op[0x63] = () => { return 1; };
+        this.op[0x73] = () => { return 1; };
+        this.op[0x83] = () => { return 1; };
+        this.op[0x93] = () => { return 1; };
+        this.op[0xa3] = () => { return 1; };
+        this.op[0xb3] = () => { return 1; };
+        this.op[0xc3] = () => { return 1; };
+        this.op[0xd3] = () => { return 1; };
+        this.op[0xe3] = () => { return 1; };
+        this.op[0xf3] = () => { return 1; };
+        this.op[0x0b] = () => { return 1; };
+        this.op[0x1b] = () => { return 1; };
+        this.op[0x2b] = () => { return 1; };
+        this.op[0x3b] = () => { return 1; };
+        this.op[0x4b] = () => { return 1; };
+        this.op[0x5b] = () => { return 1; };
+        this.op[0x6b] = () => { return 1; };
+        this.op[0x7b] = () => { return 1; };
+        this.op[0x8b] = () => { return 1; };
+        this.op[0x9b] = () => { return 1; };
+        this.op[0xab] = () => { return 1; };
+        this.op[0xbb] = () => { return 1; };
+        this.op[0xeb] = () => { return 1; };
+        this.op[0xfb] = () => { return 1; };
     }
 
     reset() {
