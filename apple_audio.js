@@ -21,6 +21,8 @@ export class AppleAudio
         this.seg_clock = 0;
         this.state = false;
         this.level = 0.6;
+        this.level_last = 0.6;
+        this.on_mute_change = null;
     }
 
     init() {
@@ -35,6 +37,36 @@ export class AppleAudio
         ws.connect(this.gn);
         this.gn.connect(this.ac.destination);
         osc.start();
+
+        // unmute
+        this.level = 0.6;
+        this.level_last = 0.6;
+        if(this.on_mute_change) this.on_mute_change(false);
+    }
+
+    get muted() {
+        return (this.level == 0) || !this.ac;
+    }
+
+    set muted(val) {
+        if(!val) { // unmute
+            if(!this.ac) {
+                this.init();
+                return;
+            }
+            if(this.ac) {
+                if(this.level_last < 0.1) {
+                    this.level_last = 0.6;
+                }
+                this.level = this.level_last;
+            }
+        }
+        else { // mute
+            this.level_last = this.level;
+            this.level = 0.0;
+        }
+
+        if(this.on_mute_change) this.on_mute_change(this.muted);
     }
 
     begin_segment(clock) {

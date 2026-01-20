@@ -262,7 +262,7 @@
       <div class="buttons">
         <button id="run_stop">run</button>
         <button id="reset">reset</button>
-        <div><img src="sound.png"><input type="range" min="0" max="1" value="0.6" step="0.1"></div>
+        <div><img id="sound_icon" src="sound-off.svg" style="cursor: pointer;"><input id="volume_slider" type="range" min="0" max="1" value="0.6" step="0.1"></div>
       </div>
 
       <div class="drives">
@@ -469,7 +469,6 @@
     function run() {
         run_stop_btn.innerText = "stop";
         if(interval) return;
-        motherboard.audio.init();
         last_ms = performance.now();
         interval = window.requestAnimationFrame(on_interval);
     }
@@ -573,6 +572,11 @@
         motherboard.keyboard.key_up();
     }
 
+    function on_mute_change(is_muted) {
+        const icon = document.getElementById('sound_icon');
+        if(icon) icon.src = is_muted ? 'sound-off.svg' : 'sound-on.svg';
+    };
+
     function init() {
         window.addEventListener('resize', on_resize);
         document.querySelector("div.sizer").addEventListener("mousedown", begin_resize, false);
@@ -618,6 +622,13 @@
         run_stop_btn.addEventListener("click", ()=>{(interval?stop:run)()});
         document.getElementById("reset").addEventListener("click", reset);
         document.querySelector("div.buttons>div>input").addEventListener("change", (e)=>{motherboard.audio.level=e.target.value});
+
+        // audio
+        document.getElementById('sound_icon').addEventListener("click", ()=>{motherboard.audio.muted=!motherboard.audio.muted});
+        motherboard.audio.on_mute_change = on_mute_change;
+        document.addEventListener('click', function() {
+            motherboard.audio.init();
+        }, {once: true});
 
         parse_params();
 
