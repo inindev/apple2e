@@ -63,7 +63,18 @@ class TestUI {
             const arrayBuffer = await file.arrayBuffer();
             this.binaryData = new Uint8Array(arrayBuffer);
 
-            this.setStatus(`Loaded ${file.name} (${this.binaryData.length} bytes)`, 'success');
+            // Auto-detect test type from filename and set success address
+            const filename = file.name.toLowerCase();
+            if (filename.includes('65c02') && filename.includes('extended')) {
+                this.successAddrInput.value = '24f1';
+                this.setStatus(`Loaded ${file.name} (${this.binaryData.length} bytes) - 65C02 extended opcodes test detected`, 'success');
+            } else if (filename.includes('6502') && filename.includes('functional')) {
+                this.successAddrInput.value = '3469';
+                this.setStatus(`Loaded ${file.name} (${this.binaryData.length} bytes) - 6502 functional test detected`, 'success');
+            } else {
+                this.setStatus(`Loaded ${file.name} (${this.binaryData.length} bytes)`, 'success');
+            }
+
             this.updateButtonStates();
         } catch (error) {
             this.setStatus(`Error loading file: ${error.message}`, 'error');
