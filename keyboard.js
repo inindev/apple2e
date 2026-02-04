@@ -1,7 +1,7 @@
 //
 //  apple2e keyboard emulation
 //
-//  Copyright 2018, John Clark
+//  Copyright 2018-2026, John Clark
 //
 //  Released under the GNU General Public License
 //  https://www.gnu.org/licenses/gpl.html
@@ -85,14 +85,22 @@ export class Keyboard
         else if(shift) {
             if(code in this.key_map_shift) {
                 code = this.key_map_shift[code];
-            } else {
+            }
+            // else allow letter keys (A-Z) to pass through as uppercase
+            else if(code < 0x41 || code > 0x5a) {
                 return; // unknown shift key
             }
         }
 
         // regular keys
-        else if(code in this.key_map) {
-            code = this.key_map[code];
+        else {
+            if(code in this.key_map) {
+                code = this.key_map[code];
+            }
+            // convert unshifted letter keys to lowercase
+            else if(code >= 0x41 && code <= 0x5a) {
+                code = code + 0x20; // convert to lowercase
+            }
         }
 
         this._key = code | 0x80;
