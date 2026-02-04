@@ -1,7 +1,7 @@
 //
 //  apple2e io mamager
 //
-//  Copyright 2018, John Clark
+//  Copyright 2018-2026, John Clark
 //
 //  Released under the GNU General Public License
 //  https://www.gnu.org/licenses/gpl.html
@@ -271,13 +271,16 @@ export class IOManager
                     if(this._80col_mode) {
                         this._80col_mode = false;
                         this.switch_display_mode();
+                        // set 80col mode after switch_display_mode (which calls reset)
+                        this._display_text.set_80col_mode(false);
                     }
                     return 0; // write handled
                 case 0xc00d: // 80 col on
-                    //console.log("80 col on");
                     if(!this._80col_mode) {
                         this._80col_mode = true;
                         this.switch_display_mode();
+                        // set 80col mode after switch_display_mode (which calls reset)
+                        this._display_text.set_80col_mode(true);
                     }
                     return 0; // write handled
                 case 0xc00e: // alt char off
@@ -496,6 +499,11 @@ export class IOManager
         this._iou_disable = true;
 
         this._bsr_write_count = 0;
+
+        // reset display 80-column mode
+        if (this._display_text) {
+            this._display_text.set_80col_mode(false);
+        }
     }
 }
 
