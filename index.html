@@ -3,6 +3,8 @@
   <meta charset="utf-8">
   <meta name="description" content="Apple IIe Computer written in ES6">
   <meta name="author" content="John Clark">
+  <meta name="copyright" content="Copyright 2018-2026, John Clark">
+  <meta name="repository" content="https://github.com/inindev/apple2e">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="favicon.png">
   <title>Apple IIe</title>
@@ -38,17 +40,6 @@
         image-rendering:optimizeSpeed;
         image-rendering:-moz-crisp-edges;
         image-rendering:pixelated;
-    }
-    div.display>div>input {
-        resize:none;
-        border:none;
-        top:0;
-        left:0;
-        height:100%;
-        width:100%;
-        color:transparent;
-        background:transparent;
-        position:absolute;
     }
     div.side {
         display:flex;
@@ -251,7 +242,8 @@
   <div class="container">
     <div class="top">
       <div class="display">
-        <div><canvas height="390" width="564"></canvas><input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="password"></div>
+        <div><canvas height="390" width="564"></canvas></div>
+        <input id="kb_input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" type="text" inputmode="text" virtualkeyboardpolicy="auto" style="position:absolute;left:-9999px;">
       </div>
       <div class="side">
         <div class="sizer"></div>
@@ -332,7 +324,7 @@
     </div>
     <div class="bottom">
       <span>see it on <a target="_blank" href="https://github.com/inindev/apple2e">github</a></span>
-      <span style="margin-left:260px">copyright 2018, <a target="_blank" href="https://www.linkedin.com/in/johnclarkdev">john clark</a>
+      <span style="margin-left:260px">copyright 2018-2016, <a target="_blank" href="https://www.linkedin.com/in/johnclarkdev">john clark</a>
     </div>
   </div>
 
@@ -551,25 +543,34 @@
 
     function key_down(e) {
         if(e.keyCode == 0) return;
-        if((e.target != canvas_input) && (e.target != body)) return;
+        if(e.target.tagName === 'INPUT' && e.target.id !== 'kb_input') return;
+        if(e.target.tagName === 'TEXTAREA') return;
         if(!e.metaKey) e.preventDefault();
         motherboard.keyboard.key_down(e.keyCode, e.shiftKey, e.ctrlKey, e.metaKey);
     }
     function key_down_trans(e) {
         if(e.keyCode == 0) return;
-        if((e.target != canvas_input) && (e.target != body)) return;
+        if(e.target.tagName === 'INPUT' && e.target.id !== 'kb_input') return;
+        if(e.target.tagName === 'TEXTAREA') return;
         if(!e.metaKey) e.preventDefault();
         const code = {0xba:0x3b, 0xbb:0x3d, 0xbd:0xad}[e.keyCode] || e.keyCode; // ; = -
         motherboard.keyboard.key_down(code, e.shiftKey, e.ctrlKey, e.metaKey);
     }
     function key_up(e) {
-        if(e.keyCode == 0) { // helpful for some mobile browsers
-            const code = e.target.value.charCodeAt();
+        if(e.target.tagName === 'INPUT' && e.target.id !== 'kb_input') return;
+        if(e.target.tagName === 'TEXTAREA') return;
+        motherboard.keyboard.key_up();
+    }
+
+    function on_input(e) {
+        if(e.target.id !== 'kb_input') return;
+        const val = e.target.value;
+        if(val.length > 0) {
+            const code = val.charCodeAt(val.length - 1);
             motherboard.keyboard.key_down(code, false, false, false);
+            motherboard.keyboard.key_up();
             e.target.value = "";
         }
-        if((e.target != canvas_input) && (e.target != body)) return;
-        motherboard.keyboard.key_up();
     }
 
     function on_mute_change(is_muted) {
@@ -578,6 +579,10 @@
     };
 
     function init() {
+        if('virtualKeyboard' in navigator) {
+            navigator.virtualKeyboard.overlaysContent = true;
+        }
+
         window.addEventListener('resize', on_resize);
         document.querySelector("div.sizer").addEventListener("mousedown", begin_resize, false);
 
@@ -589,10 +594,19 @@
         motherboard.reset();
 
         body = document.querySelector("body");
-        canvas_input = document.querySelector("input[type=password]");
+        canvas_input = document.getElementById("kb_input");
+
+        const display = document.querySelector("div.display");
+        canvas.addEventListener('click', ()=>{canvas_input.focus()});
+        display.addEventListener('click', ()=>{canvas_input.focus()});
+
+        canvas_input.focus();
+
         const ff = navigator.userAgent.toLowerCase().indexOf('firefox') > 0;
         document.addEventListener('keydown', ff?key_down:key_down_trans);
         document.addEventListener('keyup', key_up);
+
+        canvas_input.addEventListener('input', on_input);
 
         gamepad_elem = document.querySelector("div.gamepad");
         window.addEventListener("gamepadconnected", gamepad_connection);
