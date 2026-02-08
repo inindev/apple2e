@@ -39,8 +39,9 @@ export class Memory
 
         this._read_hooks = [];
         this._write_hooks = [];
+        this._write_notify_hooks = [];  // post-write hooks (video system)
+        this._flag_hooks = [];          // called when dms_* flags change
     }
-
 
     get bsr_read() { return this._bsr_read; }
     set bsr_read(val) { this._bsr_read = (val!=0); }
@@ -58,12 +59,31 @@ export class Memory
 
     // tech ref p.28
     get dms_80store() { return this._dms_80store; }
-    set dms_80store(val) { this._dms_80store = (val!=0); }
-    get dms_page2() { return this._dms_page2; }
-    set dms_page2(val) { this._dms_page2 = (val!=0); }
-    get dms_hires() { return this._dms_hires; }
-    set dms_hires(val) { this._dms_hires = (val!=0); }
+    set dms_80store(val) {
+        const new_val = (val != 0);
+        if(this._dms_80store !== new_val) {
+            this._dms_80store = new_val;
+            this._notify_flag_change();
+        }
+    }
 
+    get dms_page2() { return this._dms_page2; }
+    set dms_page2(val) {
+        const new_val = (val != 0);
+        if(this._dms_page2 !== new_val) {
+            this._dms_page2 = new_val;
+            this._notify_flag_change();
+        }
+    }
+
+    get dms_hires() { return this._dms_hires; }
+    set dms_hires(val) {
+        const new_val = (val != 0);
+        if(this._dms_hires !== new_val) {
+            this._dms_hires = new_val;
+            this._notify_flag_change();
+        }
+    }
 
     read(addr) {
         addr &= 0xffff;
@@ -123,54 +143,68 @@ export class Memory
         return this.read(addr) | this.read(addr+1)<<8;
     }
 
-
     write(addr, val) {
         addr &= 0xffff;
         val &= 0xff;
-
+        // Pre-write hooks: Allow interception for I/O handling
         for(let write_hook of this._write_hooks) {
             const res = write_hook(addr, val);
-            if(res != undefined) return;
+            if(res != undefined) return; // Hook handled it, don't write
         }
+
+        // Track which bank was written (for post-write notifications)
+        let is_aux = false;
 
         // 0000-01ff
         if(addr < 0x0200) {
+            is_aux = this._aux_zp;
             if(this._aux_zp) {
                 this._aux[addr] = val;
             } else {
                 this._main[addr] = val;
             }
+            // Notify after write
+            this._notify_write(addr, val, is_aux);
             return;
         }
 
         if(this._dms_80store) {
             // 0400-07ff
             if((addr & 0xfc00) == 0x0400) {
+                is_aux = this._dms_page2;
                 if(this._dms_page2) {
                     this._aux[addr] = val;
                 } else {
                     this._main[addr] = val;
                 }
+                // Notify after write
+                this._notify_write(addr, val, is_aux);
                 return;
             }
             // 2000-3fff
             if(this._dms_hires && ((addr & 0xe000) == 0x2000)) {
+                is_aux = this._dms_page2;
                 if(this._dms_page2) {
                     this._aux[addr] = val;
                 } else {
                     this._main[addr] = val;
                 }
+                // Notify after write
+                this._notify_write(addr, val, is_aux);
                 return;
             }
         }
 
         // 0200-bfff
         if(addr < 0xc000) {
+            is_aux = this._aux_write;
             if(this._aux_write) {
                 this._aux[addr] = val;
             } else {
                 this._main[addr] = val;
             }
+            // Notify after write
+            this._notify_write(addr, val, is_aux);
             return;
         }
 
@@ -181,19 +215,32 @@ export class Memory
 
         // d000-dfff: bank 2 write
         if(this._bsr_bank2 && ((addr & 0xf000) == 0xd000)) {
+            is_aux = this._aux_zp;
             // write dxxx bank2 (aux a & b)
             if(this._aux_zp) {
                 this._aux_bb[addr & 0x0fff] = val;
             } else {
                 this._main_bb[addr & 0x0fff] = val;
             }
+            // Notify after write
+            this._notify_write(addr, val, is_aux);
             return;
         }
         // d000-dfff bank 1 & e000-ffff
+        is_aux = this._aux_zp;
         if(this._aux_zp) {
             this._aux[addr] = val;
         } else {
             this._main[addr] = val;
+        }
+        // Notify after write
+        this._notify_write(addr, val, is_aux);
+    }
+
+    // Notify post-write hooks (called AFTER memory is written)
+    _notify_write(addr, val, is_aux) {
+        for(let notify_hook of this._write_notify_hooks) {
+            notify_hook(addr, val, is_aux);
         }
     }
 
@@ -211,7 +258,7 @@ export class Memory
         }
     }
 
-    // memory write callback hook
+    // memory write callback hook (pre-write, can intercept)
     //   function(addr, val))
     //   return undefined to contunue processing
     add_write_hook(callback) {
@@ -222,6 +269,40 @@ export class Memory
     remove_write_hook(callback) {
         if(this._write_hooks.includes(callback)) {
             this._write_hooks = this._write_hooks.filter(e => e !== callback);
+        }
+    }
+
+    // memory write notification hook (post-write, for observers like video)
+    //   function(addr, val, is_aux)
+    //   called AFTER memory has been written, cannot intercept
+    add_write_notify_hook(callback) {
+        if(!this._write_notify_hooks.includes(callback)) {
+            this._write_notify_hooks.push(callback);
+        }
+    }
+    remove_write_notify_hook(callback) {
+        if(this._write_notify_hooks.includes(callback)) {
+            this._write_notify_hooks = this._write_notify_hooks.filter(e => e !== callback);
+        }
+    }
+
+    // flag change notification hook (called when dms_* flags change)
+    //   function()
+    //   called AFTER flag value changes
+    add_flag_hook(callback) {
+        if(!this._flag_hooks.includes(callback)) {
+            this._flag_hooks.push(callback);
+        }
+    }
+    remove_flag_hook(callback) {
+        if(this._flag_hooks.includes(callback)) {
+            this._flag_hooks = this._flag_hooks.filter(e => e !== callback);
+        }
+    }
+
+    _notify_flag_change() {
+        for(let flag_hook of this._flag_hooks) {
+            flag_hook();
         }
     }
 

@@ -301,6 +301,7 @@
         <div class="color">
           <select id="gcolor">
             <option value="gc">color graphics</option>
+            <option value="gw">mono graphics</option>
             <option value="gg">green graphics</option>
             <option value="ga">amber graphics</option>
           </select>
@@ -309,7 +310,7 @@
           <input type="checkbox" id="hscan"><label for="hscan"> horizontal scanlines (text)</label>
         </div>
         <div>
-          <input type="checkbox" id="vscan"><label for="vscan"> vertical scanlines (hgr)</label>
+          <input type="checkbox" id="vscan"><label for="vscan"> vertical scanlines (graphics)</label>
         </div>
       </div>
 
@@ -469,6 +470,7 @@
         const cycles = ((now_ms - last_ms) * khz) & 0x7fff;
         last_ms = now_ms;
         motherboard.clock(cycles);
+        motherboard.renderer.render_frame();  // render framebuffer to canvas
         interval = window.requestAnimationFrame(on_interval);
     }
 
@@ -488,24 +490,25 @@
     function display_color(e) {
         const val = e.target.value;
         if(val[0] == 't') {
-            const rgb = {tg:0x00ff66, ta:0xffd429, tw:0xeeeeee}[val];
-            motherboard.display_text.fore = rgb;
+            // text color: set mode (1=white, 2=green, 3=amber)
+            const mode = {tw:1, tg:2, ta:3}[val];
+            motherboard.renderer.text_color_mode = mode;
             localStorage.setItem("settings.tcolor", val);
         } else {
-            const rgb = {gc:0, gg:0x00ff66, ga:0xffd429}[val];
-            motherboard.display_hires.fore = rgb;
-            motherboard.display_double_hires.fore = rgb;
+            // graphics color: set mode (0=color, 1=white, 2=green, 3=amber)
+            const mode = {gc:0, gw:1, gg:2, ga:3}[val];
+            motherboard.renderer.graphics_color_mode = mode;
             localStorage.setItem("settings.gcolor", val);
         }
     }
 
     function display_hscan(e) {
-        motherboard.display_text.hscan = e.target.checked;
+        motherboard.renderer.text_hscan = e.target.checked;
         localStorage.setItem("settings.hscan", e.target.checked);
     }
 
     function display_vscan(e) {
-        motherboard.display_hires.vscan = e.target.checked;
+        motherboard.renderer.graphics_vscan = e.target.checked;
         localStorage.setItem("settings.vscan", e.target.checked);
     }
 
@@ -646,7 +649,7 @@
 
         parse_params();
 
-        motherboard.message('press "run" below to start vm');
+        motherboard.message = 'press "run" below to start vm';
     }
 
     function on_resize(e) {
