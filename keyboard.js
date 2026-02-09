@@ -15,6 +15,7 @@ export class Keyboard
     constructor() {
         this._key = 0x7f;
         this._key_pressed = false;
+        this._caps_lock_ever_pressed = false;  // Track if user has toggled Caps Lock
 
         this.key_map = {
             0x25: 0x08, // (left arrow)
@@ -69,7 +70,13 @@ export class Keyboard
         this._key = 0x7f;
     }
 
-    key_down(code, shift, ctrl, meta) {
+    key_down(code, shift, ctrl, meta, caps_lock) {
+        // detect caps lock press
+        if(code === 0x14) {
+            this._caps_lock_ever_pressed = true;
+            return;
+        }
+
         this._key_pressed = true;
 
         // control
@@ -92,20 +99,28 @@ export class Keyboard
             }
         }
 
+        // caps lock
+        else if(caps_lock && !this._caps_lock_ever_pressed) {
+            // by default letters are always uppercase
+            this._caps_lock_ever_pressed = true;
+        }
+        else if(!caps_lock && this._caps_lock_ever_pressed && code >= 0x41 && code <= 0x5a) {
+            code += 0x20;
+        }
+
         // regular keys
         else {
             if(code in this.key_map) {
                 code = this.key_map[code];
             }
             // convert unshifted letter keys to lowercase
-            else if(code >= 0x41 && code <= 0x5a) {
-                code = code + 0x20; // convert to lowercase
-            }
+            // else if(code >= 0x41 && code <= 0x5a) {
+            //     code = code + 0x20; // convert to lowercase
+            // }
         }
 
         this._key = code | 0x80;
     }
-
 
     key_up() {
         this._key_pressed = false;
