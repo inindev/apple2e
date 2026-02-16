@@ -7,15 +7,19 @@
 //  https://www.gnu.org/licenses/gpl.html
 //
 //  ref: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
-//       https://github.com/WebKit/webkit/tree/master/Source/WebCore/Modules/webaudio
+//
+//  Apple II speaker is a 1-bit toggle ($C030). Each access flips the
+//  speaker cone. We use a ConstantSourceNode feeding a GainNode and
+//  schedule gain changes at cycle-accurate times via setValueAtTime().
+//  Output is centered around zero (+/- level/2) to eliminate DC bias.
 //
 
 
 export class AppleAudio
 {
     constructor(khz) {
-        this.ac;
-        this.gn;
+        this.ac = null;
+        this.gn = null;
         this.cpu_hz = khz * 1000;
         this.seg_time = 0;
         this.seg_clock = 0;
@@ -28,15 +32,15 @@ export class AppleAudio
     init() {
         if(this.ac) return;
         this.ac = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = this.ac.createOscillator({channelCount:1, channelCountMode:"explicit", frequency:0});
-        const ws = this.ac.createWaveShaper({channelCount:1, channelCountMode:"explicit"});
-        ws.curve = new Float32Array([-1, -1]);
-        this.gn = this.ac.createGain({channelCount:1, channelCountMode:"explicit", gain:0});
 
-        osc.connect(ws);
-        ws.connect(this.gn);
+        const src = this.ac.createConstantSource();
+        src.offset.value = 1.0;
+        this.gn = this.ac.createGain();
+        this.gn.gain.value = 0;
+
+        src.connect(this.gn);
         this.gn.connect(this.ac.destination);
-        osc.start();
+        src.start();
 
         // unmute
         this.level = 0.6;
@@ -71,7 +75,7 @@ export class AppleAudio
 
     begin_segment(clock) {
         if((this.level == 0) || !this.ac) return;
-        this.seg_time = this.ac.currentTime + 0.08; // gameplay is in the future
+        this.seg_time = this.ac.currentTime + 0.08; // schedule ahead for glitch-free playback
         this.seg_clock = clock;
     }
 
@@ -79,7 +83,8 @@ export class AppleAudio
         if((this.level == 0) || !this.gn) return;
         this.state = !this.state;
         const time = (clock - this.seg_clock) / this.cpu_hz;
-        this.gn.gain.setValueAtTime(this.state ? this.level : 0, time + this.seg_time);
+        const half = this.level * 0.5;
+        this.gn.gain.setValueAtTime(this.state ? half : -half, time + this.seg_time);
     }
 
     reset() {
@@ -89,4 +94,3 @@ export class AppleAudio
         this.gn.gain.value = 0;
     }
 }
-
