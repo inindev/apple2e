@@ -440,7 +440,7 @@
 
     // Understanding the Apple II, p.3-3
     // composite freq: 1020.5kHz
-    const khz = 1020.5;
+    const khz = 1023;
     let motherboard;
     let body;
     let canvas;
@@ -466,9 +466,11 @@
         interval = window.requestAnimationFrame(on_interval);
     }
 
-    function on_interval(now_ms) {
-        const cycles = ((now_ms - last_ms) * khz) & 0x7fff;
+    function on_interval() {
+        const now_ms = performance.now();
+        const delta_ms = Math.min(now_ms - last_ms, 50); // cap at ~20fps
         last_ms = now_ms;
+        const cycles = (delta_ms * khz) | 0;
         motherboard.clock(cycles);
         motherboard.renderer.render_frame();  // render framebuffer to canvas
         interval = window.requestAnimationFrame(on_interval);
