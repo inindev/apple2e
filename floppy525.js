@@ -41,8 +41,11 @@ const write_62 = [
     0xed,0xee,0xef,0xf2,0xf3,0xf4,0xf5,0xf6,0xf7,0xf9,0xfa,0xfb,0xfc,0xfd,0xfe,0xff
 ];
 
-// ProDOS_2_4_2.dsk 8d2b-8d3b
-const sec_int = [0x00,0x0d,0x0b,0x09,0x07,0x05,0x03,0x01,0x0e,0x0c,0x0a,0x08,0x06,0x04,0x02,0x0f];
+// DOS 3.3 interleave (for .dsk files) - ProDOS_2_4_2.dsk 8d2b-8d3b
+const sec_int_dos = [0x00,0x0d,0x0b,0x09,0x07,0x05,0x03,0x01,0x0e,0x0c,0x0a,0x08,0x06,0x04,0x02,0x0f];
+
+// ProDOS interleave (for .po files)
+const sec_int_po = [0x00,0x02,0x04,0x06,0x08,0x0a,0x0c,0x0e,0x01,0x03,0x05,0x07,0x09,0x0b,0x0d,0x0f];
 
 
 class Disk
@@ -195,11 +198,14 @@ export class Floppy525
         }
         const src = new Uint8Array(bin);
 
+        // Detect ProDOS order from .po file extension
+        const sec_int = name.toLowerCase().endsWith(".po") ? sec_int_po : sec_int_dos;
+
         this._disks[num].name = name;
         for(let t=0; t<35; t++) {
             let track = [];
             for(let s=15; s>=0; s--) {
-                track = track.concat(this.sector_62encode(src, t, s));
+                track = track.concat(this.sector_62encode(src, t, s, sec_int));
             }
             this._disks[num].tracks[t] = new Uint8Array(track); // 6288 bytes, pack the array
         }
@@ -208,7 +214,7 @@ export class Floppy525
     }
 
 
-    sector_62encode(src, trk, sec_ni) {
+    sector_62encode(src, trk, sec_ni, sec_int) {
         // gap 3
         // TODO: is 128 needed for sector 0 gap1?
         // ffff-ffff 00ff-ffff ff00-ffff ffff-00ff ffff-ff00
