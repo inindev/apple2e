@@ -16,6 +16,7 @@ import {Display} from "./display.js";
 import {CanvasRenderer} from "./canvas_renderer.js";
 import {Keyboard} from "./keyboard.js";
 import {Floppy525} from "./floppy525.js";
+import {SmartPort} from "./smartport.js";
 import {AppleAudio} from "./apple_audio.js";
 import {Joystick} from "./joystick.js";
 import {rom_342_0304_cd} from "./rom/342-0304-cd.js";
@@ -24,7 +25,7 @@ import {rom_342_0303_ef} from "./rom/342-0303-ef.js";
 
 export class Motherboard
 {
-    constructor(khz, canvas, floppy_led_cb) {
+    constructor(khz, canvas, floppy_led_cb, smartport_led_cb) {
         this.memory = new Memory(rom_342_0304_cd, rom_342_0303_ef);
         this.cpu = new W65C02S(this.memory);
         this.keyboard = new Keyboard();
@@ -36,6 +37,7 @@ export class Motherboard
         this.renderer = new CanvasRenderer(canvas, this.video);
 
         this.floppy525 = new Floppy525(6, this.memory, floppy_led_cb);
+        this.smartport = new SmartPort(7, this.memory, this.cpu, smartport_led_cb);
         this.audio = new AppleAudio(khz);
         this.joystick = new Joystick();
         this.io_manager = new IOManager(this.memory, () => this.cycles,
@@ -63,6 +65,7 @@ export class Motherboard
         this.io_manager.reset();
         this.video.reset();
         this.floppy525.reset();
+        this.smartport.reset();
         this.audio.reset();
 
         this.cycles = 0;

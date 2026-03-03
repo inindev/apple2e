@@ -266,7 +266,7 @@
               <span class="led" id="led1">&nbsp;</span>
             </summary>
             <div>
-              <div><span>file</span>&nbsp;<input id="file1" type="text" readonly>&nbsp;<div style="position:relative"><button>browse...</button><input type="file" id="filedialog1"></div></div>
+              <div><span>file</span>&nbsp;<input id="file1" type="text" readonly>&nbsp;<div style="position:relative"><button>browse...</button><input type="file" id="filedialog1" accept=".dsk,.do,.po,.hdv,.2mg,.2img"></div></div>
               <div><span>url</span>&nbsp;<input id="url1" type="text">&nbsp;<button id="saveurl1">save...</button></div>
             </div>
           </details>
@@ -279,7 +279,7 @@
               <span class="led" id="led2">&nbsp;</span>
             </summary>
             <div>
-              <div><span>file</span>&nbsp;<input id="file2" type="text" readonly>&nbsp;<div style="position:relative"><button>browse...</button><input type="file" id="filedialog2"></div></div>
+              <div><span>file</span>&nbsp;<input id="file2" type="text" readonly>&nbsp;<div style="position:relative"><button>browse...</button><input type="file" id="filedialog2" accept=".dsk,.do,.po,.hdv,.2mg,.2img"></div></div>
               <div><span>url</span>&nbsp;<input id="url2" type="text">&nbsp;<button id="saveurl2">save...</button></div>
             </div>
           </details>
@@ -332,6 +332,18 @@
   <script type="module">
     import {Motherboard} from "./motherboard.js";
 
+    // detect image type from filename and size
+    // returns "floppy" for 5.25" disk images, "smartport" for block devices
+    function detect_image_type(name, size) {
+        const ext = name.toLowerCase().split('.').pop();
+        if(ext === 'dsk' || ext === 'do') return "floppy";
+        if(ext === 'hdv' || ext === '2mg' || ext === '2img') return "smartport";
+        // .po: floppy at 140k, otherwise smartport
+        if(size === 143360) return "floppy";
+        if(size >= 512 && size % 512 === 0) return "smartport";
+        return "floppy";
+    }
+
     class Drive
     {
         constructor(num, display, led, dialog, file_path, url_path, save_url) {
@@ -352,16 +364,21 @@
             this.url_path.value = "";
         }
 
+        load_image(name, data) {
+            const type = detect_image_type(name, data.byteLength);
+            if(type === "smartport") {
+                return motherboard.smartport.load_image(this.num, name, data);
+            } else {
+                return motherboard.floppy525.load_disk(this.num, name, data);
+            }
+        }
+
         on_file_select(e) {
             this.display.innerText = "";
             this.file_path.value = "";
             this.url_path.value = "";
 
             const file = e.target.files[0];
-            if(file.size != 143360) {
-                alert("file must be a 140k .dsk, .do, or .po file");
-                return;
-            }
 
             const path = this.dialog.value;
             const name = path.substring(path.lastIndexOf('\\') + 1);
@@ -370,7 +387,7 @@
 
             const fr = new FileReader();
             fr.onload = () => {
-                motherboard.floppy525.load_disk(this.num, name, fr.result);
+                this.load_image(name, fr.result);
             };
             fr.readAsArrayBuffer(file);
 
@@ -382,11 +399,11 @@
             this.file_path.value = "";
 
             const url = e.target.value;
-            if(url) this.load_disk_url(url);
+            if(url) this.load_url(url);
             e.target.parentNode.parentNode.parentNode.removeAttribute("open");
         }
 
-        load_disk_url(url, name) {
+        load_url(url, name, on_loaded) {
             name = name || url.substring(url.lastIndexOf('/') + 1);
 
             if(this.url_path.value != url) this.url_path.value = url;
@@ -400,10 +417,11 @@
                     return;
                 }
 
-                const rc = motherboard.floppy525.load_disk(this.num, name, xhr.response);
+                const rc = this.load_image(name, xhr.response);
                 if(rc) {
                     this.display.innerText = name;
-                    console.log("disk " + (this.num+1) + " loaded: " + url);
+                    console.log("drive " + (this.num+1) + " loaded: " + url);
+                    if(on_loaded) on_loaded();
                 }
             };
             xhr.send();
@@ -536,13 +554,12 @@
 
         const u2 = params["u2"];
         const n2 = params["n2"];
-        if(u2) drives[1].load_disk_url(u2, n2);
+        if(u2) drives[1].load_url(u2, n2);
 
         const u1 = params["u1"];
         const n1 = params["n1"];
         if(u1) {
-            drives[0].load_disk_url(u1, n1);
-            run();
+            drives[0].load_url(u1, n1, () => { reset(); run(); });
         }
     }
 
@@ -595,7 +612,7 @@
         window.dispatchEvent(new Event('resize'));
 
         canvas = document.querySelector("div.display>div>canvas");
-        motherboard = new Motherboard(khz, canvas, (n,s)=>{drives[n].set_led(s)});
+        motherboard = new Motherboard(khz, canvas, (n,s)=>{drives[n].set_led(s)}, (n,s)=>{drives[n].set_led(s)});
         motherboard.reset();
 
         body = document.querySelector("body");
@@ -634,7 +651,7 @@
 
         const vscan = document.getElementById("vscan");
         vscan.addEventListener("change", display_vscan);
-        vscan.checked = localStorage.getItem("settings.vscan") !== "false";
+        vscan.checked = localStorage.getItem("settings.vscan") === "true";
         vscan.dispatchEvent(new Event('change'));
 
         run_stop_btn = document.getElementById("run_stop");
