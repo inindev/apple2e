@@ -63,8 +63,9 @@
 
 export class IOManager
 {
-    constructor(memory, keyboard, video, audio_cb, joystick) {
+    constructor(memory, cycle_cb, keyboard, video, audio_cb, joystick) {
         this._mem = memory;
+        this._cycle_cb = cycle_cb;
         this._kbd = keyboard;
         this._video = video;
         this._audio_cb = audio_cb;
@@ -129,6 +130,10 @@ export class IOManager
                 case 0xc018: // 80store (0: 80store off, 0x80: 80store on)
                     //console.log("80 store: " + this._mem.dms_80store);
                     return this._mem.dms_80store ? 0x80 : 0;
+                // 262 scanlines x 65 cycles/scanline = 17,030 cycles per frame
+                // 192 visible x 65 cycles/scanline = vbl starts at 12,480
+                case 0xc019: // vbl (0: not in vbl, 0x80: in vbl)
+                    return (this._cycle_cb() % 17030) >= 12480 ? 0x80 : 0;
                 case 0xc01a: // text (0: graphics mode, 0x80: text mode)
                     return this._video.mode.text ? 0x80 : 0;
                 case 0xc01b: // mixed mode (0: full screen, 0x80: mixed mode)

@@ -38,7 +38,8 @@ export class Motherboard
         this.floppy525 = new Floppy525(6, this.memory, floppy_led_cb);
         this.audio = new AppleAudio(khz);
         this.joystick = new Joystick();
-        this.io_manager = new IOManager(this.memory, this.keyboard, this.video,
+        this.io_manager = new IOManager(this.memory, () => this.cycles,
+                                        this.keyboard, this.video,
                                         this.audio_click.bind(this), this.joystick);
 
         this.cycles = 0;
