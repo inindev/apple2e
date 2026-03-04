@@ -79,6 +79,9 @@ export class IOManager
 
         this._bsr_write_count = 0;
 
+        // paddle timer: $C070 triggers, $C064-$C067 count down
+        this._paddle_trigger_cycle = 0;
+
         this._mem.add_read_hook(this.read.bind(this));
         this._mem.add_write_hook(this.write.bind(this));
 
@@ -153,21 +156,27 @@ export class IOManager
                 case 0xc063: // js pb2
                     return this._joystick.button2 ? 0x80 : 0;
                 case 0xc064: // js pdl-0
-                    return this._joystick.axis0;
                 case 0xc065: // js pdl-1
-                    return this._joystick.axis1;
                 case 0xc066: // js pdl-2
-                    return this._joystick.axis2;
                 case 0xc067: // js pdl-3
-                    return this._joystick.axis3;
-                case 0xc070: // trigger paddle read
+                {
+                    const axis = [this._joystick.axis0, this._joystick.axis1,
+                                  this._joystick.axis2, this._joystick.axis3][addr - 0xc064];
+                    const elapsed = this._cycle_cb() - this._paddle_trigger_cycle;
+                    return (elapsed < axis * 11) ? 0x80 : 0;
+                }
+                case 0xc070: case 0xc071: case 0xc072: case 0xc073:
+                case 0xc074: case 0xc075: case 0xc076: case 0xc077:
+                case 0xc078: case 0xc079: case 0xc07a: case 0xc07b:
+                case 0xc07c: case 0xc07d: case 0xc07e: case 0xc07f:
+                {
+                    // any read in $c070-$c07F triggers paddle timer
+                    this._paddle_trigger_cycle = this._cycle_cb();
+                    // $c07e/$c07f also return iou/dhires status
+                    if(addr === 0xc07e) return this._iou_disable ? 0x80 : 0;
+                    if(addr === 0xc07f) return this._video.mode.dhires ? 0 : 0x80;
                     return 0;
-                case 0xc07e: // iou disable (0: iou is enabled, 0x80: iou is disabled)
-                    //console.log("iou disable: " + this._iou_disable);
-                    return this._iou_disable ? 0x80 : 0;
-                case 0xc07f: // double hires (0: double hires inactive, 0x80: double hires active)
-                    //console.log("double hires: " + this._video.mode.dhires);
-                    return this._video.mode.dhires ? 0 : 0x80;
+                }
                 default:
                     break;
             }
@@ -281,11 +290,20 @@ export class IOManager
                 //case 0xc010: // keyboard strobe (handled above)
                 //    this._kbd.strobe();
                 //    return 0; // write handled
+                case 0xc070: case 0xc071: case 0xc072: case 0xc073:
+                case 0xc074: case 0xc075: case 0xc076: case 0xc077:
+                case 0xc078: case 0xc079: case 0xc07a: case 0xc07b:
+                case 0xc07c: case 0xc07d:
+                    // any write in $c070-$c07f triggers paddle timer
+                    this._paddle_trigger_cycle = this._cycle_cb();
+                    return 0; // write handled
                 case 0xc07e: // iou disable on
                     this._iou_disable = true;
+                    this._paddle_trigger_cycle = this._cycle_cb();
                     return 0; // write handled
                 case 0xc07f: // iou disable off
                     this._iou_disable = false;
+                    this._paddle_trigger_cycle = this._cycle_cb();
                     return 0; // write handled
                 default:
                     break;

@@ -83,6 +83,8 @@ export class Keyboard
         if(ctrl) {
             if(code in this.key_map_ctrl) {
                 code = this.key_map_ctrl[code];
+            } else if(code >= 0x41 && code <= 0x5a) {
+                code = code - 0x40; // Ctrl+A=0x01 .. Ctrl+Z=0x1a
             } else {
                 return; // unknown control key
             }

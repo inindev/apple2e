@@ -216,10 +216,10 @@
         width:12em;
     }
     div.gamepad {
-        width:37;
+        width:24;
         height:24;
         float:right;
-        background-image:url("gamepad.png");
+        background-image:url("joystick.svg");
     }
     div.gamepad.off {
         opacity:0.2;
@@ -534,12 +534,13 @@
 
     function gamepad_connection(e) {
         if(e.type === "gamepaddisconnected") {
-            if(motherboard.joystick.gamepad == e.gamepad) {
-                motherboard.joystick.gamepad = undefined;
+            motherboard.joystick.disconnect(e.gamepad);
+            if(!motherboard.joystick.gamepad) {
                 gamepad_elem.className= "gamepad off";
             }
         } else {
-            motherboard.joystick.gamepad = e.gamepad;
+            console.log("gamepad connected:", e.gamepad.id, "mapping:", e.gamepad.mapping, "buttons:", e.gamepad.buttons.length, "axes:", e.gamepad.axes.length);
+            motherboard.joystick.connect(e.gamepad);
             gamepad_elem.className= "gamepad";
         }
     }
